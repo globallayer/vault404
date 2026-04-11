@@ -35,7 +35,7 @@ USAGE:
 License: FSL-1.1-Apache-2.0
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __license__ = "FSL-1.1-Apache-2.0"
 
 # Core security

@@ -1,6 +1,6 @@
 [project]
 name = "clawdex"
-version = "0.1.1"
+version = "0.1.2"
 description = "Claw-dex: Collective AI coding agent brain - every verified fix makes ALL agents smarter"
 readme = "README.md"
 license = { text = "FSL-1.1-Apache-2.0" }

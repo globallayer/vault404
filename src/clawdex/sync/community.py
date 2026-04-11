@@ -31,8 +31,8 @@ except ImportError:
 
 
 # Default community brain endpoint
-DEFAULT_API_URL = "https://clawdex-brain.supabase.co/rest/v1"
-DEFAULT_ANON_KEY = ""  # Public anon key for read access
+DEFAULT_API_URL = "https://sbbhtxxegxkqjbfqcrwz.supabase.co/rest/v1"
+DEFAULT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiYmh0eHhlZ3hrcWpiZnFjcnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODU4MjcsImV4cCI6MjA4OTM2MTgyN30.L4D9egjGWUbfpbGkZogVWPia4y6GBKjvJ0FhjB8fuIc"
 
 # Environment variable overrides
 API_URL = os.environ.get("CLAWDEX_API_URL", DEFAULT_API_URL)
