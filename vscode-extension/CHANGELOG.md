@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Clawdex VS Code extension will be documented in this file.
+All notable changes to the 404vault VS Code extension will be documented in this file.
 
 ## [0.1.0] - 2024-01-15
 
@@ -19,7 +19,7 @@ All notable changes to the Clawdex VS Code extension will be documented in this 
 - Secret redaction (API keys, passwords stripped before storage)
 
 ### Technical
-- Communicates with Clawdex CLI via child process
+- Communicates with vault404 CLI via child process
 - MCP (Model Context Protocol) support for detailed queries
 - WebView panels for solution details and stats
 - Configurable Python path and defaults

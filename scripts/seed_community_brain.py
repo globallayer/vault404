@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed the Clawdex Community Brain with common error patterns and solutions.
+Seed the 404vault Community Brain with common error patterns and solutions.
 
 This script populates the community_solutions table with 50+ verified error
 patterns covering JavaScript/TypeScript, Python, Database, and DevOps categories.
@@ -9,7 +9,7 @@ Usage:
     python scripts/seed_community_brain.py
 
 Environment:
-    Uses default Supabase credentials from clawdex.sync.community
+    Uses default Supabase credentials from vault404.sync.community
 """
 
 import hashlib
@@ -36,11 +36,11 @@ except ImportError:
 
 # Supabase configuration
 API_URL = os.environ.get(
-    "CLAWDEX_API_URL",
+    "VAULT404_API_URL",
     "https://sbbhtxxegxkqjbfqcrwz.supabase.co/rest/v1"
 )
 API_KEY = os.environ.get(
-    "CLAWDEX_API_KEY",
+    "VAULT404_API_KEY",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiYmh0eHhlZ3hrcWpiZnFjcnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODU4MjcsImV4cCI6MjA4OTM2MTgyN30.L4D9egjGWUbfpbGkZogVWPia4y6GBKjvJ0FhjB8fuIc"
 )
 
@@ -643,7 +643,7 @@ def build_records_from_data(data: list[dict]) -> list[dict]:
 def main():
     """Seed the community brain with error patterns."""
     print("=" * 70)
-    print("Clawdex Community Brain Seeder")
+    print("404vault Community Brain Seeder")
     print("=" * 70)
     print(f"API URL: {API_URL}")
     print()

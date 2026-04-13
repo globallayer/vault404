@@ -1,4 +1,4 @@
-# Clawdex VS Code Extension
+# 404vault VS Code Extension
 
 **Collective AI Coding Agent Brain** - Brings community knowledge directly into your editor.
 
@@ -7,30 +7,30 @@ Every verified fix makes ALL AI agents smarter. Automatic sharing, fully anonymi
 ## Features
 
 ### Log Errors & Solutions
-When you fix a bug, log it to Clawdex so you (and the community) can find it later.
+When you fix a bug, log it to 404vault so you (and the community) can find it later.
 
-- Right-click on selected text > "Clawdex: Log Error & Solution"
-- Or use Command Palette: `Clawdex: Log Error & Solution`
+- Right-click on selected text > "404vault: Log Error & Solution"
+- Or use Command Palette: `404vault: Log Error & Solution`
 
 ### Find Solutions
 When you encounter an error, search the knowledge base for solutions.
 
-- Select error text > Right-click > "Clawdex: Find Solution for Selected Text"
-- Or use Command Palette: `Clawdex: Find Solution for Error`
+- Select error text > Right-click > "404vault: Find Solution for Selected Text"
+- Or use Command Palette: `404vault: Find Solution for Error`
 
 ### Auto-Query on Error (Optional)
-When enabled, Clawdex automatically searches for solutions when errors appear in the Problems panel.
+When enabled, 404vault automatically searches for solutions when errors appear in the Problems panel.
 
 ### Verify Solutions
 After applying a solution, verify it worked. Verified solutions are **automatically contributed** to the community brain.
 
-- Command Palette: `Clawdex: Verify Solution Worked`
+- Command Palette: `404vault: Verify Solution Worked`
 
 ### Log Decisions & Patterns
 Track architectural decisions and reusable patterns:
 
-- `Clawdex: Log Architectural Decision`
-- `Clawdex: Log Reusable Pattern`
+- `404vault: Log Architectural Decision`
+- `404vault: Log Reusable Pattern`
 
 ### Status Bar
 Shows current knowledge base stats. Click to view detailed statistics.
@@ -38,11 +38,11 @@ Shows current knowledge base stats. Click to view detailed statistics.
 ## Requirements
 
 1. **Python 3.10+** installed
-2. **Clawdex** Python package installed:
+2. **vault404** Python package installed:
    ```bash
-   pip install clawdex
+   pip install vault404
    # or
-   uv pip install clawdex
+   uv pip install vault404
    ```
 
 ## Installation
@@ -53,7 +53,7 @@ Shows current knowledge base stats. Click to view detailed statistics.
 
 ### From Source
 ```bash
-cd clawdex/vscode-extension
+cd 404vault/vscode-extension
 npm install
 npm run compile
 ```
@@ -64,25 +64,25 @@ Then press F5 to launch Extension Development Host.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `clawdex.pythonPath` | `python` | Path to Python executable |
-| `clawdex.enableStatusBar` | `true` | Show stats in status bar |
-| `clawdex.autoQueryOnError` | `true` | Auto-search when errors detected |
-| `clawdex.defaultLanguage` | `""` | Default language context (auto-detected) |
-| `clawdex.defaultFramework` | `""` | Default framework context |
-| `clawdex.communityEnabled` | `false` | Enable community brain search |
+| `vault404.pythonPath` | `python` | Path to Python executable |
+| `vault404.enableStatusBar` | `true` | Show stats in status bar |
+| `vault404.autoQueryOnError` | `true` | Auto-search when errors detected |
+| `vault404.defaultLanguage` | `""` | Default language context (auto-detected) |
+| `vault404.defaultFramework` | `""` | Default framework context |
+| `vault404.communityEnabled` | `false` | Enable community brain search |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `Clawdex: Log Error & Solution` | Log an error and its fix |
-| `Clawdex: Find Solution for Error` | Search for solutions |
-| `Clawdex: Find Solution for Selected Text` | Search using selected text |
-| `Clawdex: Verify Solution Worked` | Mark solution as working |
-| `Clawdex: Log Architectural Decision` | Record a decision |
-| `Clawdex: Log Reusable Pattern` | Record a pattern |
-| `Clawdex: Show Knowledge Base Stats` | View statistics |
-| `Clawdex: Refresh Stats` | Refresh status bar |
+| `404vault: Log Error & Solution` | Log an error and its fix |
+| `404vault: Find Solution for Error` | Search for solutions |
+| `404vault: Find Solution for Selected Text` | Search using selected text |
+| `404vault: Verify Solution Worked` | Mark solution as working |
+| `404vault: Log Architectural Decision` | Record a decision |
+| `404vault: Log Reusable Pattern` | Record a pattern |
+| `404vault: Show Knowledge Base Stats` | View statistics |
+| `404vault: Refresh Stats` | Refresh status bar |
 
 ## How It Works
 
@@ -90,7 +90,7 @@ Then press F5 to launch Extension Development Host.
 1. You fix an error
    |
    v
-2. Log it to Clawdex (secrets auto-redacted)
+2. Log it to 404vault (secrets auto-redacted)
    |
    v
 3. Verify it worked
@@ -112,16 +112,16 @@ Then press F5 to launch Extension Development Host.
 ## Troubleshooting
 
 ### "Command not found" errors
-Make sure `clawdex` is installed and accessible from your Python path:
+Make sure `vault404` is installed and accessible from your Python path:
 ```bash
-python -m clawdex stats
+python -m vault404 stats
 ```
 
 ### No solutions found
 The knowledge base grows over time. Start by logging your own fixes!
 
 ### Status bar shows "?"
-Check that Python and Clawdex are properly installed. View the Output panel (View > Output > Clawdex) for debug info.
+Check that Python and vault404 are properly installed. View the Output panel (View > Output > 404vault) for debug info.
 
 ## Development
 

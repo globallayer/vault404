@@ -1,19 +1,19 @@
 {
-  "name": "clawdex",
-  "displayName": "Clawdex - AI Coding Agent Brain",
+  "name": "vault404",
+  "displayName": "404vault - AI Coding Agent Brain",
   "description": "Collective AI coding agent memory. Log errors, find solutions, and verify fixes from VS Code.",
   "version": "0.1.0",
-  "publisher": "clawdex",
+  "publisher": "globallayer",
   "license": "FSL-1.1-Apache-2.0",
   "icon": "images/icon.svg",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/clawdex"
+    "url": "https://github.com/globallayer/404vault"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/clawdex/issues"
+    "url": "https://github.com/globallayer/404vault/issues"
   },
-  "homepage": "https://github.com/yourusername/clawdex#readme",
+  "homepage": "https://github.com/globallayer/404vault#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -28,7 +28,8 @@
     "solutions",
     "memory",
     "collective",
-    "agent"
+    "agent",
+    "404vault"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -37,84 +38,84 @@
   "contributes": {
     "commands": [
       {
-        "command": "clawdex.logErrorFix",
-        "title": "Clawdex: Log Error & Solution"
+        "command": "vault404.logErrorFix",
+        "title": "404vault: Log Error & Solution"
       },
       {
-        "command": "clawdex.findSolution",
-        "title": "Clawdex: Find Solution for Error"
+        "command": "vault404.findSolution",
+        "title": "404vault: Find Solution for Error"
       },
       {
-        "command": "clawdex.findSolutionFromSelection",
-        "title": "Clawdex: Find Solution for Selected Text"
+        "command": "vault404.findSolutionFromSelection",
+        "title": "404vault: Find Solution for Selected Text"
       },
       {
-        "command": "clawdex.verifySolution",
-        "title": "Clawdex: Verify Solution Worked"
+        "command": "vault404.verifySolution",
+        "title": "404vault: Verify Solution Worked"
       },
       {
-        "command": "clawdex.logDecision",
-        "title": "Clawdex: Log Architectural Decision"
+        "command": "vault404.logDecision",
+        "title": "404vault: Log Architectural Decision"
       },
       {
-        "command": "clawdex.logPattern",
-        "title": "Clawdex: Log Reusable Pattern"
+        "command": "vault404.logPattern",
+        "title": "404vault: Log Reusable Pattern"
       },
       {
-        "command": "clawdex.showStats",
-        "title": "Clawdex: Show Knowledge Base Stats"
+        "command": "vault404.showStats",
+        "title": "404vault: Show Knowledge Base Stats"
       },
       {
-        "command": "clawdex.refreshStats",
-        "title": "Clawdex: Refresh Stats"
+        "command": "vault404.refreshStats",
+        "title": "404vault: Refresh Stats"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "clawdex.findSolutionFromSelection",
+          "command": "vault404.findSolutionFromSelection",
           "when": "editorHasSelection",
-          "group": "clawdex@1"
+          "group": "vault404@1"
         },
         {
-          "command": "clawdex.logErrorFix",
+          "command": "vault404.logErrorFix",
           "when": "editorHasSelection",
-          "group": "clawdex@2"
+          "group": "vault404@2"
         }
       ]
     },
     "configuration": {
-      "title": "Clawdex",
+      "title": "404vault",
       "properties": {
-        "clawdex.pythonPath": {
+        "vault404.pythonPath": {
           "type": "string",
           "default": "python",
-          "description": "Path to Python executable (for clawdex CLI)"
+          "description": "Path to Python executable (for vault404 CLI)"
         },
-        "clawdex.enableStatusBar": {
+        "vault404.enableStatusBar": {
           "type": "boolean",
           "default": true,
-          "description": "Show Clawdex stats in the status bar"
+          "description": "Show 404vault stats in the status bar"
         },
-        "clawdex.autoQueryOnError": {
+        "vault404.autoQueryOnError": {
           "type": "boolean",
           "default": true,
           "description": "Automatically query community brain when errors are detected in Problems panel"
         },
-        "clawdex.defaultLanguage": {
+        "vault404.defaultLanguage": {
           "type": "string",
           "default": "",
           "description": "Default language context for queries (auto-detected if empty)"
         },
-        "clawdex.defaultFramework": {
+        "vault404.defaultFramework": {
           "type": "string",
           "default": "",
           "description": "Default framework context for queries"
         },
-        "clawdex.communityEnabled": {
+        "vault404.communityEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable community brain search (requires CLAWDEX_COMMUNITY=true)"
+          "description": "Enable community brain search (requires VAULT404_COMMUNITY=true)"
         }
       }
     }

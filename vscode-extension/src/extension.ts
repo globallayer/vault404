@@ -1,5 +1,5 @@
 /**
- * Clawdex VS Code Extension
+ * 404vault VS Code Extension
  *
  * Collective AI Coding Agent Brain - brings community knowledge
  * directly into your editor.
@@ -13,14 +13,14 @@
 
 import * as vscode from "vscode";
 import {
-  ClawdexClient,
+  404vaultClient,
   Solution,
   Context,
-  ClawdexStats,
-} from "./clawdexClient";
+  404vaultStats,
+} from "./vault404Client";
 
 // Global state
-let client: ClawdexClient;
+let client: 404vaultClient;
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
 let lastLoggedRecordId: string | undefined;
@@ -31,39 +31,39 @@ let diagnosticsWatcher: vscode.Disposable | undefined;
  */
 export function activate(context: vscode.ExtensionContext): void {
   // Create output channel for logging
-  outputChannel = vscode.window.createOutputChannel("Clawdex");
+  outputChannel = vscode.window.createOutputChannel("404vault");
   context.subscriptions.push(outputChannel);
 
   // Initialize client
-  client = new ClawdexClient(outputChannel);
+  client = new 404vaultClient(outputChannel);
 
-  outputChannel.appendLine("[Clawdex] Extension activated");
+  outputChannel.appendLine("[404vault] Extension activated");
 
   // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.command = "clawdex.showStats";
+  statusBarItem.command = "vault404.showStats";
   context.subscriptions.push(statusBarItem);
 
   // Register commands
   context.subscriptions.push(
-    vscode.commands.registerCommand("clawdex.logErrorFix", logErrorFixCommand),
-    vscode.commands.registerCommand("clawdex.findSolution", findSolutionCommand),
+    vscode.commands.registerCommand("vault404.logErrorFix", logErrorFixCommand),
+    vscode.commands.registerCommand("vault404.findSolution", findSolutionCommand),
     vscode.commands.registerCommand(
-      "clawdex.findSolutionFromSelection",
+      "vault404.findSolutionFromSelection",
       findSolutionFromSelectionCommand
     ),
-    vscode.commands.registerCommand("clawdex.verifySolution", verifySolutionCommand),
-    vscode.commands.registerCommand("clawdex.logDecision", logDecisionCommand),
-    vscode.commands.registerCommand("clawdex.logPattern", logPatternCommand),
-    vscode.commands.registerCommand("clawdex.showStats", showStatsCommand),
-    vscode.commands.registerCommand("clawdex.refreshStats", refreshStatsCommand)
+    vscode.commands.registerCommand("vault404.verifySolution", verifySolutionCommand),
+    vscode.commands.registerCommand("vault404.logDecision", logDecisionCommand),
+    vscode.commands.registerCommand("vault404.logPattern", logPatternCommand),
+    vscode.commands.registerCommand("vault404.showStats", showStatsCommand),
+    vscode.commands.registerCommand("vault404.refreshStats", refreshStatsCommand)
   );
 
   // Initialize status bar
-  const config = vscode.workspace.getConfiguration("clawdex");
+  const config = vscode.workspace.getConfiguration("vault404");
   if (config.get("enableStatusBar", true)) {
     updateStatusBar();
     // Refresh stats every 5 minutes
@@ -79,8 +79,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // Watch for configuration changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("clawdex")) {
-        const newConfig = vscode.workspace.getConfiguration("clawdex");
+      if (e.affectsConfiguration("vault404")) {
+        const newConfig = vscode.workspace.getConfiguration("vault404");
         if (newConfig.get("enableStatusBar", true)) {
           updateStatusBar();
         } else {
@@ -102,7 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
  * Extension deactivation
  */
 export function deactivate(): void {
-  outputChannel?.appendLine("[Clawdex] Extension deactivated");
+  outputChannel?.appendLine("[404vault] Extension deactivated");
 }
 
 // =============================================================================
@@ -141,7 +141,7 @@ async function logErrorFixCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging error fix to Clawdex...",
+      title: "Logging error fix to 404vault...",
       cancellable: false,
     },
     async () => {
@@ -295,7 +295,7 @@ async function logDecisionCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging decision to Clawdex...",
+      title: "Logging decision to 404vault...",
       cancellable: false,
     },
     async () => {
@@ -377,7 +377,7 @@ async function logPatternCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging pattern to Clawdex...",
+      title: "Logging pattern to 404vault...",
       cancellable: false,
     },
     async () => {
@@ -405,15 +405,15 @@ async function showStatsCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Loading Clawdex stats...",
+      title: "Loading 404vault stats...",
       cancellable: false,
     },
     async () => {
       const stats = await client.getStats();
 
       const panel = vscode.window.createWebviewPanel(
-        "clawdexStats",
-        "Clawdex Knowledge Base",
+        "vault404Stats",
+        "404vault Knowledge Base",
         vscode.ViewColumn.One,
         {}
       );
@@ -428,7 +428,7 @@ async function showStatsCommand(): Promise<void> {
  */
 async function refreshStatsCommand(): Promise<void> {
   await updateStatusBar();
-  vscode.window.showInformationMessage("Clawdex stats refreshed");
+  vscode.window.showInformationMessage("404vault stats refreshed");
 }
 
 // =============================================================================
@@ -442,7 +442,7 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Searching Clawdex for solutions...",
+      title: "Searching 404vault for solutions...",
       cancellable: false,
     },
     async () => {
@@ -456,11 +456,11 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
       if (!result.found || result.solutions.length === 0) {
         const logAction = "Log Solution";
         const action = await vscode.window.showInformationMessage(
-          "No solutions found in Clawdex. Want to log one?",
+          "No solutions found in 404vault. Want to log one?",
           logAction
         );
         if (action === logAction) {
-          vscode.commands.executeCommand("clawdex.logErrorFix");
+          vscode.commands.executeCommand("vault404.logErrorFix");
         }
         return;
       }
@@ -494,8 +494,8 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
  */
 function showSolutionDetail(solution: Solution): void {
   const panel = vscode.window.createWebviewPanel(
-    "clawdexSolution",
-    "Clawdex Solution",
+    "vault404Solution",
+    "404vault Solution",
     vscode.ViewColumn.Beside,
     { enableScripts: true }
   );
@@ -510,11 +510,11 @@ async function updateStatusBar(): Promise<void> {
   try {
     const stats = await client.getStats();
     statusBarItem.text = `$(brain) ${stats.total_records}`;
-    statusBarItem.tooltip = `Clawdex: ${stats.error_fixes} fixes, ${stats.decisions} decisions, ${stats.patterns} patterns`;
+    statusBarItem.tooltip = `404vault: ${stats.error_fixes} fixes, ${stats.decisions} decisions, ${stats.patterns} patterns`;
     statusBarItem.show();
   } catch (error) {
     statusBarItem.text = "$(brain) ?";
-    statusBarItem.tooltip = "Clawdex: Unable to load stats";
+    statusBarItem.tooltip = "404vault: Unable to load stats";
     statusBarItem.show();
   }
 }
@@ -554,7 +554,7 @@ function setupDiagnosticsWatcher(context: vscode.ExtensionContext): void {
             if (sol.confidence > 0.7) {
               const viewAction = "View Solution";
               const action = await vscode.window.showInformationMessage(
-                `Clawdex found a ${(sol.confidence * 100).toFixed(0)}% match: ${sol.solution.substring(0, 50)}...`,
+                `404vault found a ${(sol.confidence * 100).toFixed(0)}% match: ${sol.solution.substring(0, 50)}...`,
                 viewAction
               );
 
@@ -575,7 +575,7 @@ function setupDiagnosticsWatcher(context: vscode.ExtensionContext): void {
  * Get context from user input
  */
 async function getContextFromUser(): Promise<Context> {
-  const config = vscode.workspace.getConfiguration("clawdex");
+  const config = vscode.workspace.getConfiguration("vault404");
 
   const categories = [
     "database",
@@ -604,14 +604,14 @@ async function getContextFromUser(): Promise<Context> {
 /**
  * Generate HTML for stats panel
  */
-function getStatsHtml(stats: ClawdexStats): string {
+function getStatsHtml(stats: 404vaultStats): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clawdex Knowledge Base</title>
+    <title>404vault Knowledge Base</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -652,7 +652,7 @@ function getStatsHtml(stats: ClawdexStats): string {
     </style>
 </head>
 <body>
-    <h1>Clawdex Knowledge Base</h1>
+    <h1>404vault Knowledge Base</h1>
 
     <div class="stats-container">
         <div class="stat-card">
@@ -674,7 +674,7 @@ function getStatsHtml(stats: ClawdexStats): string {
     </div>
 
     <div class="info">
-        <strong>Data Directory:</strong> ${stats.data_directory || "~/.clawdex/"}
+        <strong>Data Directory:</strong> ${stats.data_directory || "~/.vault404/"}
         <br><br>
         <strong>Tip:</strong> Verified solutions are automatically contributed to the community brain,
         making all AI coding agents smarter!
@@ -699,7 +699,7 @@ function getSolutionHtml(solution: Solution): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clawdex Solution</title>
+    <title>404vault Solution</title>
     <style>
         body {
             font-family: var(--vscode-font-family);

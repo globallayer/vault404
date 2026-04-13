@@ -1,14 +1,14 @@
 /**
- * Clawdex Client - Communicates with clawdex CLI
+ * Vault404 Client - Communicates with vault404 CLI
  *
- * Provides methods to interact with the Clawdex knowledge base
- * by spawning the clawdex CLI or MCP server.
+ * Provides methods to interact with the Vault404 knowledge base
+ * by spawning the vault404 CLI or MCP server.
  */
 
 import { spawn, ChildProcess } from "child_process";
 import * as vscode from "vscode";
 
-export interface ClawdexStats {
+export interface Vault404Stats {
   error_fixes: number;
   decisions: number;
   patterns: number;
@@ -59,9 +59,9 @@ export interface Context {
 }
 
 /**
- * Client for interacting with Clawdex CLI
+ * Client for interacting with Vault404 CLI
  */
-export class ClawdexClient {
+export class Vault404Client {
   private pythonPath: string;
   private outputChannel: vscode.OutputChannel;
 
@@ -71,12 +71,12 @@ export class ClawdexClient {
   }
 
   private getPythonPath(): string {
-    const config = vscode.workspace.getConfiguration("clawdex");
+    const config = vscode.workspace.getConfiguration("vault404");
     return config.get("pythonPath", "python");
   }
 
   /**
-   * Execute a clawdex CLI command and return parsed JSON
+   * Execute a vault404 CLI command and return parsed JSON
    */
   private async executeCommand(
     args: string[],
@@ -84,10 +84,10 @@ export class ClawdexClient {
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const pythonPath = this.getPythonPath();
-      const fullArgs = ["-m", "clawdex", "--json", ...args];
+      const fullArgs = ["-m", "vault404", "--json", ...args];
 
       this.outputChannel.appendLine(
-        `[Clawdex] Running: ${pythonPath} ${fullArgs.join(" ")}`
+        `[Vault404] Running: ${pythonPath} ${fullArgs.join(" ")}`
       );
 
       const proc = spawn(pythonPath, fullArgs, {
@@ -114,9 +114,9 @@ export class ClawdexClient {
       }
 
       proc.on("close", (code: number | null) => {
-        this.outputChannel.appendLine(`[Clawdex] Exit code: ${code}`);
+        this.outputChannel.appendLine(`[Vault404] Exit code: ${code}`);
         if (stderr) {
-          this.outputChannel.appendLine(`[Clawdex] Stderr: ${stderr}`);
+          this.outputChannel.appendLine(`[Vault404] Stderr: ${stderr}`);
         }
 
         if (code === 0 || stdout.trim()) {
@@ -130,7 +130,7 @@ export class ClawdexClient {
             }
           } catch {
             this.outputChannel.appendLine(
-              `[Clawdex] JSON parse error: ${stdout}`
+              `[Vault404] JSON parse error: ${stdout}`
             );
             resolve({ raw: stdout, error: "Failed to parse JSON" });
           }
@@ -140,14 +140,14 @@ export class ClawdexClient {
       });
 
       proc.on("error", (err: Error) => {
-        this.outputChannel.appendLine(`[Clawdex] Process error: ${err.message}`);
+        this.outputChannel.appendLine(`[Vault404] Process error: ${err.message}`);
         reject(err);
       });
     });
   }
 
   /**
-   * Execute a clawdex MCP tool call via stdin/stdout
+   * Execute a vault404 MCP tool call via stdin/stdout
    */
   private async executeMcpTool(
     toolName: string,
@@ -155,10 +155,10 @@ export class ClawdexClient {
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const pythonPath = this.getPythonPath();
-      const mcpArgs = ["-m", "clawdex.mcp_server"];
+      const mcpArgs = ["-m", "vault404.mcp_server"];
 
       this.outputChannel.appendLine(
-        `[Clawdex MCP] Calling tool: ${toolName} with args: ${JSON.stringify(args)}`
+        `[Vault404 MCP] Calling tool: ${toolName} with args: ${JSON.stringify(args)}`
       );
 
       const proc = spawn(pythonPath, mcpArgs, {
@@ -187,7 +187,7 @@ export class ClawdexClient {
         params: {
           protocolVersion: "2024-11-05",
           capabilities: {},
-          clientInfo: { name: "vscode-clawdex", version: "0.1.0" },
+          clientInfo: { name: "vscode-vault404", version: "0.1.0" },
         },
       };
 
@@ -222,7 +222,7 @@ export class ClawdexClient {
 
       proc.on("close", () => {
         clearTimeout(timeout);
-        this.outputChannel.appendLine(`[Clawdex MCP] Response: ${stdout}`);
+        this.outputChannel.appendLine(`[Vault404 MCP] Response: ${stdout}`);
 
         try {
           // Parse the last JSON response
@@ -264,10 +264,10 @@ export class ClawdexClient {
   /**
    * Get knowledge base statistics
    */
-  async getStats(): Promise<ClawdexStats> {
+  async getStats(): Promise<Vault404Stats> {
     try {
       const result = (await this.executeCommand(["stats"])) as {
-        stats?: ClawdexStats;
+        stats?: Vault404Stats;
       };
       return (
         result.stats || {
@@ -279,7 +279,7 @@ export class ClawdexClient {
         }
       );
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Stats error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Stats error: ${error}`);
       return {
         error_fixes: 0,
         decisions: 0,
@@ -318,10 +318,10 @@ export class ClawdexClient {
         ...context,
       })) as FindSolutionResult;
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Find solution error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Find solution error: ${error}`);
       return {
         found: false,
-        message: `Error querying Clawdex: ${error}`,
+        message: `Error querying Vault404: ${error}`,
         solutions: [],
       };
     }
@@ -363,7 +363,7 @@ export class ClawdexClient {
 
       return (await this.executeMcpTool("log_error_fix", args)) as LogResult;
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Log error fix error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Log error fix error: ${error}`);
       return {
         success: false,
         record_id: "",
@@ -406,7 +406,7 @@ export class ClawdexClient {
 
       return (await this.executeMcpTool("log_decision", args)) as LogResult;
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Log decision error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Log decision error: ${error}`);
       return {
         success: false,
         record_id: "",
@@ -451,7 +451,7 @@ export class ClawdexClient {
 
       return (await this.executeMcpTool("log_pattern", args)) as LogResult;
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Log pattern error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Log pattern error: ${error}`);
       return {
         success: false,
         record_id: "",
@@ -470,7 +470,7 @@ export class ClawdexClient {
         success,
       })) as VerifyResult;
     } catch (error) {
-      this.outputChannel.appendLine(`[Clawdex] Verify solution error: ${error}`);
+      this.outputChannel.appendLine(`[Vault404] Verify solution error: ${error}`);
       return {
         success: false,
         message: `Failed to verify solution: ${error}`,

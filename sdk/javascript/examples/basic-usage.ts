@@ -1,7 +1,7 @@
 /**
- * Clawdex SDK - Basic Usage Example
+ * Vault404 SDK - Basic Usage Example
  *
- * This example demonstrates the core functionality of the Clawdex SDK:
+ * This example demonstrates the core functionality of the Vault404 SDK:
  * - Finding solutions for errors
  * - Logging error fixes
  * - Verifying solutions
@@ -11,7 +11,7 @@
  */
 
 import {
-  ClawdexClient,
+  Vault404Client,
   ValidationError,
   NetworkError,
   ApiError,
@@ -20,13 +20,13 @@ import {
 async function main() {
   // Initialize the client
   // For local development, use: apiUrl: 'http://localhost:8000'
-  const clawdex = new ClawdexClient({
-    apiUrl: "https://api.clawdex.dev",
+  const vault404 = new Vault404Client({
+    apiUrl: "https://api.vault404.dev",
     debug: true, // Enable debug logging
   });
 
   console.log("=".repeat(60));
-  console.log("Clawdex SDK - Basic Usage Example");
+  console.log("Vault404 SDK - Basic Usage Example");
   console.log("=".repeat(60));
 
   // =========================================================================
@@ -35,7 +35,7 @@ async function main() {
   console.log("\n1. Finding solutions for an error...\n");
 
   try {
-    const solutions = await clawdex.findSolution({
+    const solutions = await vault404.findSolution({
       errorMessage: "Cannot find module 'react'",
       language: "typescript",
       framework: "nextjs",
@@ -65,7 +65,7 @@ async function main() {
   console.log("\n2. Logging an error fix...\n");
 
   try {
-    const logResult = await clawdex.logErrorFix({
+    const logResult = await vault404.logErrorFix({
       errorMessage: "ECONNREFUSED 127.0.0.1:5432",
       solution: "Start the PostgreSQL service: sudo systemctl start postgresql",
       errorType: "ConnectionError",
@@ -97,7 +97,7 @@ async function main() {
   try {
     // Note: In a real scenario, you would use the record ID from a previous
     // findSolution call. This is just an example.
-    const verifyResult = await clawdex.verifySolution({
+    const verifyResult = await vault404.verifySolution({
       id: "ef_20240115_143052",
       success: true,
     });
@@ -118,7 +118,7 @@ async function main() {
   console.log("\n4. Logging an architectural decision...\n");
 
   try {
-    const decisionResult = await clawdex.logDecision({
+    const decisionResult = await vault404.logDecision({
       title: "State management library",
       choice: "Zustand",
       alternatives: ["Redux", "Context API", "Jotai", "MobX"],
@@ -153,7 +153,7 @@ async function main() {
   console.log("\n5. Finding past decisions...\n");
 
   try {
-    const decisions = await clawdex.findDecision({
+    const decisions = await vault404.findDecision({
       topic: "state management",
       limit: 3,
     });
@@ -180,7 +180,7 @@ async function main() {
   console.log("\n6. Logging a reusable pattern...\n");
 
   try {
-    const patternResult = await clawdex.logPattern({
+    const patternResult = await vault404.logPattern({
       name: "Optimistic UI Updates",
       category: "frontend",
       problem: "Slow UI feedback when waiting for API responses",
@@ -232,7 +232,7 @@ const handleLike = async (postId: string) => {
   console.log("\n7. Finding patterns...\n");
 
   try {
-    const patterns = await clawdex.findPattern({
+    const patterns = await vault404.findPattern({
       problem: "slow API response handling",
       category: "frontend",
       language: "typescript",
@@ -262,9 +262,9 @@ const handleLike = async (postId: string) => {
   console.log("\n8. Getting knowledge base stats...\n");
 
   try {
-    const stats = await clawdex.getStats();
+    const stats = await vault404.getStats();
 
-    console.log("Clawdex Knowledge Base Statistics:");
+    console.log("Vault404 Knowledge Base Statistics:");
     console.log(`  Total Records: ${stats.stats.totalRecords}`);
     console.log(`  Error Fixes: ${stats.stats.errorFixes}`);
     console.log(`  Decisions: ${stats.stats.decisions}`);

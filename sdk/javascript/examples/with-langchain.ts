@@ -1,7 +1,7 @@
 /**
- * Clawdex SDK - LangChain Integration Example
+ * Vault404 SDK - LangChain Integration Example
  *
- * This example demonstrates how to integrate Clawdex with LangChain
+ * This example demonstrates how to integrate Vault404 with LangChain
  * to enhance AI agent error handling and knowledge sharing.
  *
  * Prerequisites:
@@ -10,7 +10,7 @@
  * Run with: npx ts-node examples/with-langchain.ts
  */
 
-import { ClawdexClient, Solution } from "../src/index.js";
+import { Vault404Client, Solution } from "../src/index.js";
 
 // Note: In a real application, you would import from langchain
 // import { ChatOpenAI } from "@langchain/openai";
@@ -21,23 +21,23 @@ import { ClawdexClient, Solution } from "../src/index.js";
 /**
  * Example of creating a LangChain tool for finding solutions
  *
- * This tool allows an AI agent to search the Clawdex knowledge base
+ * This tool allows an AI agent to search the Vault404 knowledge base
  * for solutions to errors it encounters.
  */
-function createFindSolutionTool(clawdex: ClawdexClient) {
+function createFindSolutionTool(vault404: Vault404Client) {
   // In a real implementation, you would return a DynamicTool:
   // return new DynamicTool({
-  //   name: "clawdex_find_solution",
-  //   description: "Search the Clawdex knowledge base for solutions to an error. Input should be the error message.",
+  //   name: "vault404_find_solution",
+  //   description: "Search the Vault404 knowledge base for solutions to an error. Input should be the error message.",
   //   func: async (errorMessage: string) => { ... }
   // });
 
   return {
-    name: "clawdex_find_solution",
+    name: "vault404_find_solution",
     description:
-      "Search the Clawdex knowledge base for solutions to an error. Input should be the error message.",
+      "Search the Vault404 knowledge base for solutions to an error. Input should be the error message.",
     func: async (input: string): Promise<string> => {
-      const result = await clawdex.findSolution({
+      const result = await vault404.findSolution({
         errorMessage: input,
         limit: 3,
       });
@@ -62,13 +62,13 @@ function createFindSolutionTool(clawdex: ClawdexClient) {
  * Example of creating a LangChain tool for logging error fixes
  *
  * This tool allows an AI agent to contribute its discoveries
- * back to the Clawdex knowledge base.
+ * back to the Vault404 knowledge base.
  */
-function createLogErrorFixTool(clawdex: ClawdexClient) {
+function createLogErrorFixTool(vault404: Vault404Client) {
   return {
-    name: "clawdex_log_error_fix",
+    name: "vault404_log_error_fix",
     description:
-      "Log a successful error fix to the Clawdex knowledge base. Input should be JSON with errorMessage and solution fields.",
+      "Log a successful error fix to the Vault404 knowledge base. Input should be JSON with errorMessage and solution fields.",
     func: async (input: string): Promise<string> => {
       try {
         const { errorMessage, solution, language, framework } = JSON.parse(input);
@@ -77,7 +77,7 @@ function createLogErrorFixTool(clawdex: ClawdexClient) {
           return "Error: Both errorMessage and solution are required.";
         }
 
-        const result = await clawdex.logErrorFix({
+        const result = await vault404.logErrorFix({
           errorMessage,
           solution,
           language,
@@ -100,13 +100,13 @@ function createLogErrorFixTool(clawdex: ClawdexClient) {
 /**
  * Example of creating a LangChain tool for finding patterns
  */
-function createFindPatternTool(clawdex: ClawdexClient) {
+function createFindPatternTool(vault404: Vault404Client) {
   return {
-    name: "clawdex_find_pattern",
+    name: "vault404_find_pattern",
     description:
-      "Search the Clawdex knowledge base for reusable patterns. Input should be a description of the problem you're trying to solve.",
+      "Search the Vault404 knowledge base for reusable patterns. Input should be a description of the problem you're trying to solve.",
     func: async (input: string): Promise<string> => {
-      const result = await clawdex.findPattern({
+      const result = await vault404.findPattern({
         problem: input,
         limit: 3,
       });
@@ -128,10 +128,10 @@ function createFindPatternTool(clawdex: ClawdexClient) {
 }
 
 /**
- * Example agent that uses Clawdex for enhanced error handling
+ * Example agent that uses Vault404 for enhanced error handling
  */
-class ClawdexEnhancedAgent {
-  private clawdex: ClawdexClient;
+class Vault404EnhancedAgent {
+  private vault404: Vault404Client;
   private tools: Array<{
     name: string;
     description: string;
@@ -139,32 +139,32 @@ class ClawdexEnhancedAgent {
   }>;
 
   constructor(apiUrl?: string) {
-    this.clawdex = new ClawdexClient({
-      apiUrl: apiUrl ?? "https://api.clawdex.dev",
+    this.vault404 = new Vault404Client({
+      apiUrl: apiUrl ?? "https://api.vault404.dev",
       debug: false,
     });
 
     this.tools = [
-      createFindSolutionTool(this.clawdex),
-      createLogErrorFixTool(this.clawdex),
-      createFindPatternTool(this.clawdex),
+      createFindSolutionTool(this.vault404),
+      createLogErrorFixTool(this.vault404),
+      createFindPatternTool(this.vault404),
     ];
   }
 
   /**
-   * Handle an error by first checking Clawdex, then trying to solve it
+   * Handle an error by first checking Vault404, then trying to solve it
    */
   async handleError(errorMessage: string, context?: { language?: string; framework?: string }): Promise<{
     solved: boolean;
     solution?: string;
-    source?: "clawdex" | "generated";
+    source?: "vault404" | "generated";
     contributedBack?: boolean;
   }> {
     console.log(`\nHandling error: "${errorMessage}"`);
 
-    // Step 1: Check Clawdex for existing solutions
-    console.log("Checking Clawdex knowledge base...");
-    const existingSolutions = await this.clawdex.findSolution({
+    // Step 1: Check Vault404 for existing solutions
+    console.log("Checking Vault404 knowledge base...");
+    const existingSolutions = await this.vault404.findSolution({
       errorMessage,
       language: context?.language,
       framework: context?.framework,
@@ -179,7 +179,7 @@ class ClawdexEnhancedAgent {
         console.log(`Found existing solution with ${(bestSolution.confidence * 100).toFixed(0)}% confidence`);
 
         // Verify the solution worked
-        const verifyResult = await this.clawdex.verifySolution({
+        const verifyResult = await this.vault404.verifySolution({
           id: bestSolution.id,
           success: true,
         });
@@ -187,7 +187,7 @@ class ClawdexEnhancedAgent {
         return {
           solved: true,
           solution: bestSolution.solution,
-          source: "clawdex",
+          source: "vault404",
           contributedBack: verifyResult.contributed,
         };
       }
@@ -198,9 +198,9 @@ class ClawdexEnhancedAgent {
     const generatedSolution = await this.generateSolution(errorMessage, context);
 
     if (generatedSolution) {
-      // Step 3: Log the new solution to Clawdex
-      console.log("Logging new solution to Clawdex...");
-      const logResult = await this.clawdex.logErrorFix({
+      // Step 3: Log the new solution to Vault404
+      console.log("Logging new solution to Vault404...");
+      const logResult = await this.vault404.logErrorFix({
         errorMessage,
         solution: generatedSolution,
         language: context?.language,
@@ -256,10 +256,10 @@ class ClawdexEnhancedAgent {
  */
 async function main() {
   console.log("=".repeat(60));
-  console.log("Clawdex SDK - LangChain Integration Example");
+  console.log("Vault404 SDK - LangChain Integration Example");
   console.log("=".repeat(60));
 
-  const agent = new ClawdexEnhancedAgent();
+  const agent = new Vault404EnhancedAgent();
 
   // Example 1: Handle a common error
   console.log("\n--- Example 1: Module Not Found Error ---");
@@ -289,7 +289,7 @@ async function main() {
 
   // Example 4: Direct tool usage
   console.log("\n--- Direct Tool Usage ---");
-  const findSolutionTool = tools.find((t) => t.name === "clawdex_find_solution");
+  const findSolutionTool = tools.find((t) => t.name === "vault404_find_solution");
   if (findSolutionTool) {
     const toolResult = await findSolutionTool.func("React useState is not defined");
     console.log("\nTool result:", toolResult);
@@ -320,7 +320,7 @@ Then create an agent like this:
 
   const tools = [
     new DynamicTool({
-      name: "clawdex_find_solution",
+      name: "vault404_find_solution",
       description: "...",
       func: async (input) => { ... }
     }),
@@ -334,7 +334,7 @@ Then create an agent like this:
     input: "Fix this error: Cannot find module 'react'"
   });
 
-The Clawdex tools enable your LangChain agents to:
+The Vault404 tools enable your LangChain agents to:
 - Learn from past solutions
 - Share discoveries with other agents
 - Build a collective knowledge base
