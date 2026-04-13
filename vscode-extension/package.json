@@ -1,6 +1,6 @@
 {
   "name": "vault404",
-  "displayName": "404vault - AI Coding Agent Brain",
+  "displayName": "vault404 - AI Coding Agent Brain",
   "description": "Collective AI coding agent memory. Log errors, find solutions, and verify fixes from VS Code.",
   "version": "0.1.0",
   "publisher": "globallayer",
@@ -8,12 +8,12 @@
   "icon": "images/icon.svg",
   "repository": {
     "type": "git",
-    "url": "https://github.com/globallayer/404vault"
+    "url": "https://github.com/globallayer/vault404"
   },
   "bugs": {
-    "url": "https://github.com/globallayer/404vault/issues"
+    "url": "https://github.com/globallayer/vault404/issues"
   },
-  "homepage": "https://github.com/globallayer/404vault#readme",
+  "homepage": "https://github.com/globallayer/vault404#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -29,7 +29,7 @@
     "memory",
     "collective",
     "agent",
-    "404vault"
+    "vault404"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -39,35 +39,35 @@
     "commands": [
       {
         "command": "vault404.logErrorFix",
-        "title": "404vault: Log Error & Solution"
+        "title": "vault404: Log Error & Solution"
       },
       {
         "command": "vault404.findSolution",
-        "title": "404vault: Find Solution for Error"
+        "title": "vault404: Find Solution for Error"
       },
       {
         "command": "vault404.findSolutionFromSelection",
-        "title": "404vault: Find Solution for Selected Text"
+        "title": "vault404: Find Solution for Selected Text"
       },
       {
         "command": "vault404.verifySolution",
-        "title": "404vault: Verify Solution Worked"
+        "title": "vault404: Verify Solution Worked"
       },
       {
         "command": "vault404.logDecision",
-        "title": "404vault: Log Architectural Decision"
+        "title": "vault404: Log Architectural Decision"
       },
       {
         "command": "vault404.logPattern",
-        "title": "404vault: Log Reusable Pattern"
+        "title": "vault404: Log Reusable Pattern"
       },
       {
         "command": "vault404.showStats",
-        "title": "404vault: Show Knowledge Base Stats"
+        "title": "vault404: Show Knowledge Base Stats"
       },
       {
         "command": "vault404.refreshStats",
-        "title": "404vault: Refresh Stats"
+        "title": "vault404: Refresh Stats"
       }
     ],
     "menus": {
@@ -85,7 +85,7 @@
       ]
     },
     "configuration": {
-      "title": "404vault",
+      "title": "vault404",
       "properties": {
         "vault404.pythonPath": {
           "type": "string",
@@ -95,7 +95,7 @@
         "vault404.enableStatusBar": {
           "type": "boolean",
           "default": true,
-          "description": "Show 404vault stats in the status bar"
+          "description": "Show vault404 stats in the status bar"
         },
         "vault404.autoQueryOnError": {
           "type": "boolean",

@@ -1,5 +1,5 @@
 """
-Local Storage Backend for 404vault
+Local Storage Backend for vault404
 
 Stores all data locally in ~/.vault404/ with optional encryption.
 No network calls, no external dependencies beyond Python stdlib + pydantic.
@@ -22,7 +22,7 @@ ENCRYPTED_MARKER = b"VAULT404_ENCRYPTED:"
 
 class LocalStorage:
     """
-    Local file-based storage for 404vault.
+    Local file-based storage for vault404.
 
     Structure:
         ~/.vault404/

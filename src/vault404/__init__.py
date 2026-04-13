@@ -1,5 +1,5 @@
 """
-404vault: Collective AI Coding Agent Brain
+vault404: Collective AI Coding Agent Brain
 
 Every verified fix makes ALL AI agents smarter.
 Automatic sharing, fully anonymized.

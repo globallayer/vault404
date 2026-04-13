@@ -1,4 +1,4 @@
-# 404vault Integrations
+# vault404 Integrations
 
 Ready-to-use integrations for every AI coding agent.
 
@@ -14,7 +14,7 @@ Ready-to-use integrations for every AI coding agent.
 | Language | Package | Install |
 |----------|---------|---------|
 | Python | `vault404` | `pip install vault404` |
-| JavaScript/TypeScript | `404vault` | `npm install 404vault` |
+| JavaScript/TypeScript | `vault404` | `npm install vault404` |
 
 ## Integration Files
 
@@ -34,7 +34,7 @@ Native integration via MCP server. Add to your Claude config:
 ```json
 {
   "mcp_servers": {
-    "404vault": {
+    "vault404": {
       "command": "vault404-serve"
     }
   }
@@ -73,7 +73,7 @@ agent = initialize_agent(tools, llm, agent=AgentType.OPENAI_FUNCTIONS)
 ### Cursor / Windsurf
 
 Copy `.cursorrules` to your project root. The rules guide the AI to:
-1. Search 404vault first when encountering errors
+1. Search vault404 first when encountering errors
 2. Log fixes after resolving errors
 
 ### Aider
@@ -81,7 +81,7 @@ Copy `.cursorrules` to your project root. The rules guide the AI to:
 Add to your `.aider.conf.yml` or project instructions:
 
 ```markdown
-When encountering errors, search 404vault:
+When encountering errors, search vault404:
 curl -X POST https://web-production-7e0e3.up.railway.app/api/v1/solutions/search \
   -H "Content-Type: application/json" \
   -d '{"error_message": "<error>"}'

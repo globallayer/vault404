@@ -1,4 +1,4 @@
-"""Querying tools for 404vault - find solutions, decisions, and patterns"""
+"""Querying tools for vault404 - find solutions, decisions, and patterns"""
 
 import os
 from typing import Optional
@@ -20,7 +20,7 @@ async def find_solution(
     limit: int = 3,
 ) -> dict:
     """
-    Find solutions for an error from 404vault.
+    Find solutions for an error from vault404.
 
     ALWAYS check this first when encountering an error.
     Returns past solutions ranked by relevance and context match.
@@ -83,7 +83,7 @@ async def find_solution(
     if not all_results:
         return {
             "found": False,
-            "message": "No matching solutions found in 404vault",
+            "message": "No matching solutions found in vault404",
             "solutions": [],
             "suggestion": "After fixing this error, use log_error_fix to save the solution.",
         }
@@ -113,7 +113,7 @@ async def find_decision(
     limit: int = 3,
 ) -> dict:
     """
-    Find past decisions on a topic from 404vault.
+    Find past decisions on a topic from vault404.
 
     Check this before making architectural choices.
 
@@ -169,7 +169,7 @@ async def find_pattern(
     limit: int = 3,
 ) -> dict:
     """
-    Find reusable patterns for a problem from 404vault.
+    Find reusable patterns for a problem from vault404.
 
     Check this before implementing solutions.
 

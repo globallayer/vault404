@@ -1,4 +1,4 @@
-"""Sync layer for 404vault - enables opt-in contribution to community knowledge"""
+"""Sync layer for vault404 - enables opt-in contribution to community knowledge"""
 
 from .anonymizer import anonymize_record
 from .contribution import ContributionManager

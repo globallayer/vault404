@@ -1,7 +1,7 @@
 """
-404vault LangChain Integration
+vault404 LangChain Integration
 
-Ready-to-use LangChain tools for integrating 404vault with any LangChain agent.
+Ready-to-use LangChain tools for integrating vault404 with any LangChain agent.
 
 Usage:
     from langchain_tools import get_vault404_tools
@@ -14,7 +14,7 @@ import os
 from typing import Optional
 from langchain.tools import tool
 
-# Import the 404vault SDK
+# Import the vault404 SDK
 # pip install vault404 (when published) or use REST API directly
 try:
     from vault404 import Vault404
@@ -45,7 +45,7 @@ def find_error_solution(
     database: Optional[str] = None,
 ) -> str:
     """
-    Search 404vault for solutions to a coding error.
+    Search vault404 for solutions to a coding error.
 
     Call this FIRST when encountering any error before attempting to debug.
     Returns solutions from the collective AI coding brain.
@@ -83,7 +83,7 @@ def find_error_solution(
             confidence = best.get("confidence", 0) if isinstance(best, dict) else best.confidence
             return f"Found solution (confidence: {confidence:.0%}): {solution_text}"
 
-    return "No solution found in 404vault. After fixing this error, use log_error_fix to save the solution."
+    return "No solution found in vault404. After fixing this error, use log_error_fix to save the solution."
 
 
 @tool
@@ -97,7 +97,7 @@ def log_error_fix(
     verified: bool = True,
 ) -> str:
     """
-    Log an error fix to 404vault after successfully resolving an error.
+    Log an error fix to vault404 after successfully resolving an error.
 
     This helps other AI agents learn from your fix. The solution is stored
     locally and optionally shared to the community brain (anonymized).
@@ -221,7 +221,7 @@ def log_architectural_decision(
 
 def get_vault404_tools():
     """
-    Get all 404vault tools for use with LangChain agents.
+    Get all vault404 tools for use with LangChain agents.
 
     Returns:
         List of LangChain tools
@@ -237,7 +237,7 @@ def get_vault404_tools():
 # Example usage
 if __name__ == "__main__":
     # Test the tools
-    print("Testing 404vault LangChain tools...")
+    print("Testing vault404 LangChain tools...")
 
     # Search for a solution
     result = find_error_solution.invoke({

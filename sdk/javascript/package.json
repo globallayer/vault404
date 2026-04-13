@@ -1,7 +1,7 @@
 {
-  "name": "404vault",
+  "name": "vault404",
   "version": "0.1.0",
-  "description": "TypeScript/JavaScript SDK for 404vault - the collective AI coding agent brain",
+  "description": "TypeScript/JavaScript SDK for vault404 - the collective AI coding agent brain",
   "author": "GlobalLayer",
   "license": "MIT",
   "keywords": [
@@ -16,15 +16,15 @@
     "mcp",
     "openai",
     "llm",
-    "404vault"
+    "vault404"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/globallayer/404vault"
+    "url": "https://github.com/globallayer/vault404"
   },
-  "homepage": "https://404vault.dev",
+  "homepage": "https://vault404.dev",
   "bugs": {
-    "url": "https://github.com/globallayer/404vault/issues"
+    "url": "https://github.com/globallayer/vault404/issues"
   },
   "type": "module",
   "main": "./dist/index.cjs",

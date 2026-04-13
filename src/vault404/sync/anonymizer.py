@@ -1,5 +1,5 @@
 """
-Anonymization Layer for 404vault
+Anonymization Layer for vault404
 
 Transforms personal records into shareable, anonymized knowledge.
 Strips ALL identifying information while preserving the useful pattern.

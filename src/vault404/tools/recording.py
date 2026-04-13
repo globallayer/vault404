@@ -1,4 +1,4 @@
-"""Recording tools for 404vault - log errors, decisions, and patterns with secret redaction"""
+"""Recording tools for vault404 - log errors, decisions, and patterns with secret redaction"""
 
 from typing import Optional
 from ..storage import get_storage, ErrorFix, Decision, Pattern, Context, ErrorInfo, SolutionInfo
@@ -24,7 +24,7 @@ async def log_error_fix(
     verified: bool = False,
 ) -> dict:
     """
-    Log an error and its solution to 404vault.
+    Log an error and its solution to vault404.
 
     SECURITY: All inputs are automatically scanned for secrets
     (API keys, passwords, tokens) and redacted before storage.
@@ -106,7 +106,7 @@ async def log_decision(
     framework: Optional[str] = None,
 ) -> dict:
     """
-    Log an architectural decision to 404vault.
+    Log an architectural decision to vault404.
 
     Args:
         title: Short title for the decision
@@ -163,7 +163,7 @@ async def log_pattern(
     explanation: Optional[str] = None,
 ) -> dict:
     """
-    Log a reusable pattern to 404vault.
+    Log a reusable pattern to vault404.
 
     SECURITY: Code snippets are scanned for secrets and redacted.
 

@@ -1,8 +1,8 @@
-# 404vault Python SDK
+# vault404 Python SDK
 
-The official Python SDK for [404vault](https://404vault.dev) - the collective AI coding agent brain.
+The official Python SDK for [vault404](https://vault404.dev) - the collective AI coding agent brain.
 
-> Stack Overflow taught developers. 404vault teaches AI.
+> Stack Overflow taught developers. vault404 teaches AI.
 > Fix it once. Fix it for everyone.
 
 ## Installation
@@ -160,7 +160,7 @@ if result.found:
 For local development or self-hosted instances:
 
 ```python
-client = 404vault(api_url="http://localhost:8000")
+client = Vault404(api_url="http://localhost:8000")
 ```
 
 ### With API Key
@@ -168,7 +168,7 @@ client = 404vault(api_url="http://localhost:8000")
 For authenticated access (future feature):
 
 ```python
-client = 404vault(api_key="your-api-key")
+client = Vault404(api_key="your-api-key")
 ```
 
 ### Debug Mode
@@ -176,7 +176,7 @@ client = 404vault(api_key="your-api-key")
 Enable debug logging to see API requests:
 
 ```python
-client = 404vault(debug=True)
+client = Vault404(debug=True)
 ```
 
 ### Custom Timeout
@@ -184,7 +184,7 @@ client = 404vault(debug=True)
 Set a custom request timeout (in seconds):
 
 ```python
-client = 404vault(timeout=60)
+client = Vault404(timeout=60)
 ```
 
 ## Error Handling
@@ -224,7 +224,7 @@ client = Vault404()
 
 @tool
 def find_error_solution(error_message: str, language: str = None) -> str:
-    """Find solutions for a coding error from the 404vault knowledge base."""
+    """Find solutions for a coding error from the vault404 knowledge base."""
     result = client.find_solution(
         error_message=error_message,
         language=language
@@ -261,7 +261,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "find_solution",
-            "description": "Find solutions for a coding error from the 404vault knowledge base",
+            "description": "Find solutions for a coding error from the vault404 knowledge base",
             "parameters": {
                 "type": "object",
                 "properties": {

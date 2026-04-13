@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed the 404vault Community Brain with common error patterns and solutions.
+Seed the vault404 Community Brain with common error patterns and solutions.
 
 This script populates the community_solutions table with 50+ verified error
 patterns covering JavaScript/TypeScript, Python, Database, and DevOps categories.
@@ -643,7 +643,7 @@ def build_records_from_data(data: list[dict]) -> list[dict]:
 def main():
     """Seed the community brain with error patterns."""
     print("=" * 70)
-    print("404vault Community Brain Seeder")
+    print("vault404 Community Brain Seeder")
     print("=" * 70)
     print(f"API URL: {API_URL}")
     print()

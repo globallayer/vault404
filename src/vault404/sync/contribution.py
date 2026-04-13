@@ -1,5 +1,5 @@
 """
-Contribution Manager for 404vault
+Contribution Manager for vault404
 
 Handles opt-in contribution of anonymized knowledge to community indexes.
 This is the bridge between local storage and shared learning.

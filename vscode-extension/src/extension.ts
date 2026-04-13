@@ -1,5 +1,5 @@
 /**
- * 404vault VS Code Extension
+ * vault404 VS Code Extension
  *
  * Collective AI Coding Agent Brain - brings community knowledge
  * directly into your editor.
@@ -13,14 +13,14 @@
 
 import * as vscode from "vscode";
 import {
-  404vaultClient,
+  vault404Client,
   Solution,
   Context,
-  404vaultStats,
+  vault404Stats,
 } from "./vault404Client";
 
 // Global state
-let client: 404vaultClient;
+let client: vault404Client;
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
 let lastLoggedRecordId: string | undefined;
@@ -31,13 +31,13 @@ let diagnosticsWatcher: vscode.Disposable | undefined;
  */
 export function activate(context: vscode.ExtensionContext): void {
   // Create output channel for logging
-  outputChannel = vscode.window.createOutputChannel("404vault");
+  outputChannel = vscode.window.createOutputChannel("vault404");
   context.subscriptions.push(outputChannel);
 
   // Initialize client
-  client = new 404vaultClient(outputChannel);
+  client = new vault404Client(outputChannel);
 
-  outputChannel.appendLine("[404vault] Extension activated");
+  outputChannel.appendLine("[vault404] Extension activated");
 
   // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(
@@ -102,7 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
  * Extension deactivation
  */
 export function deactivate(): void {
-  outputChannel?.appendLine("[404vault] Extension deactivated");
+  outputChannel?.appendLine("[vault404] Extension deactivated");
 }
 
 // =============================================================================
@@ -141,7 +141,7 @@ async function logErrorFixCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging error fix to 404vault...",
+      title: "Logging error fix to vault404...",
       cancellable: false,
     },
     async () => {
@@ -295,7 +295,7 @@ async function logDecisionCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging decision to 404vault...",
+      title: "Logging decision to vault404...",
       cancellable: false,
     },
     async () => {
@@ -377,7 +377,7 @@ async function logPatternCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Logging pattern to 404vault...",
+      title: "Logging pattern to vault404...",
       cancellable: false,
     },
     async () => {
@@ -405,7 +405,7 @@ async function showStatsCommand(): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Loading 404vault stats...",
+      title: "Loading vault404 stats...",
       cancellable: false,
     },
     async () => {
@@ -413,7 +413,7 @@ async function showStatsCommand(): Promise<void> {
 
       const panel = vscode.window.createWebviewPanel(
         "vault404Stats",
-        "404vault Knowledge Base",
+        "vault404 Knowledge Base",
         vscode.ViewColumn.One,
         {}
       );
@@ -428,7 +428,7 @@ async function showStatsCommand(): Promise<void> {
  */
 async function refreshStatsCommand(): Promise<void> {
   await updateStatusBar();
-  vscode.window.showInformationMessage("404vault stats refreshed");
+  vscode.window.showInformationMessage("vault404 stats refreshed");
 }
 
 // =============================================================================
@@ -442,7 +442,7 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Searching 404vault for solutions...",
+      title: "Searching vault404 for solutions...",
       cancellable: false,
     },
     async () => {
@@ -456,7 +456,7 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
       if (!result.found || result.solutions.length === 0) {
         const logAction = "Log Solution";
         const action = await vscode.window.showInformationMessage(
-          "No solutions found in 404vault. Want to log one?",
+          "No solutions found in vault404. Want to log one?",
           logAction
         );
         if (action === logAction) {
@@ -495,7 +495,7 @@ async function searchAndShowSolutions(errorMessage: string): Promise<void> {
 function showSolutionDetail(solution: Solution): void {
   const panel = vscode.window.createWebviewPanel(
     "vault404Solution",
-    "404vault Solution",
+    "vault404 Solution",
     vscode.ViewColumn.Beside,
     { enableScripts: true }
   );
@@ -510,11 +510,11 @@ async function updateStatusBar(): Promise<void> {
   try {
     const stats = await client.getStats();
     statusBarItem.text = `$(brain) ${stats.total_records}`;
-    statusBarItem.tooltip = `404vault: ${stats.error_fixes} fixes, ${stats.decisions} decisions, ${stats.patterns} patterns`;
+    statusBarItem.tooltip = `vault404: ${stats.error_fixes} fixes, ${stats.decisions} decisions, ${stats.patterns} patterns`;
     statusBarItem.show();
   } catch (error) {
     statusBarItem.text = "$(brain) ?";
-    statusBarItem.tooltip = "404vault: Unable to load stats";
+    statusBarItem.tooltip = "vault404: Unable to load stats";
     statusBarItem.show();
   }
 }
@@ -554,7 +554,7 @@ function setupDiagnosticsWatcher(context: vscode.ExtensionContext): void {
             if (sol.confidence > 0.7) {
               const viewAction = "View Solution";
               const action = await vscode.window.showInformationMessage(
-                `404vault found a ${(sol.confidence * 100).toFixed(0)}% match: ${sol.solution.substring(0, 50)}...`,
+                `vault404 found a ${(sol.confidence * 100).toFixed(0)}% match: ${sol.solution.substring(0, 50)}...`,
                 viewAction
               );
 
@@ -604,14 +604,14 @@ async function getContextFromUser(): Promise<Context> {
 /**
  * Generate HTML for stats panel
  */
-function getStatsHtml(stats: 404vaultStats): string {
+function getStatsHtml(stats: vault404Stats): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404vault Knowledge Base</title>
+    <title>vault404 Knowledge Base</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -652,7 +652,7 @@ function getStatsHtml(stats: 404vaultStats): string {
     </style>
 </head>
 <body>
-    <h1>404vault Knowledge Base</h1>
+    <h1>vault404 Knowledge Base</h1>
 
     <div class="stats-container">
         <div class="stat-card">
@@ -699,7 +699,7 @@ function getSolutionHtml(solution: Solution): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404vault Solution</title>
+    <title>vault404 Solution</title>
     <style>
         body {
             font-family: var(--vscode-font-family);

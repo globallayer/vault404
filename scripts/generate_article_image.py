@@ -1,5 +1,5 @@
 """
-Generate article image for 404vault Medium article using fal.ai
+Generate article image for vault404 Medium article using fal.ai
 
 Usage:
     FAL_KEY=your_api_key python generate_article_image.py
@@ -22,7 +22,7 @@ def main():
         print("4. Run: set FAL_KEY=your_key_here")
         sys.exit(1)
 
-    print("Generating image for 404vault article...")
+    print("Generating image for vault404 article...")
 
     prompt = """A futuristic digital brain network visualization showing multiple AI agents
 connected through glowing neural pathways. Dark tech background with blue and purple neon

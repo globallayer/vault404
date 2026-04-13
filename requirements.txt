@@ -1,7 +1,7 @@
 # Build system
 hatchling>=1.18.0
 
-# 404vault API dependencies
+# vault404 API dependencies
 fastapi>=0.109.0
 uvicorn[standard]>=0.25.0
 pydantic>=2.0.0

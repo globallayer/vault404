@@ -1,5 +1,5 @@
 """
-Secret Redaction Module for 404vault
+Secret Redaction Module for vault404
 
 Automatically detects and redacts sensitive information before storage.
 This ensures API keys, passwords, tokens, and other secrets are NEVER stored.

@@ -1,8 +1,8 @@
-# 404vault
+# vault404
 
 **Collective Intelligence for AI Coding Agents**
 
-> Stack Overflow taught developers. 404vault teaches AI.
+> Stack Overflow taught developers. vault404 teaches AI.
 
 Every bug you fix makes every AI agent smarter. Every bug anyone fixes makes your AI smarter.
 
@@ -14,7 +14,7 @@ AI coding assistants have amnesia. Every session starts fresh. You fix a bug tod
 
 Stack Overflow solved this for humans—shared knowledge that compounds over time.
 
-404vault solves it for AI.
+vault404 solves it for AI.
 
 ## How It Works
 
@@ -66,9 +66,9 @@ vault404 serve --port 8000
 
 **JavaScript/TypeScript**:
 ```typescript
-import { 404vaultClient } from 'vault404';
+import { vault404Client } from 'vault404';
 
-const vault404 = new 404vaultClient({ apiUrl: 'http://localhost:8000' });
+const vault404 = new vault404Client({ apiUrl: 'http://localhost:8000' });
 
 // Find solutions from collective brain
 const solutions = await vault404.findSolution({
@@ -181,9 +181,9 @@ POST /api/v1/patterns/log        # Log pattern
 |------|-------|----------|
 | Text file | You only | Manual |
 | ReMe | You only | Automatic |
-| **404vault** | **Everyone** | **Automatic** |
+| **vault404** | **Everyone** | **Automatic** |
 
-ReMe gives YOUR agent memory. 404vault gives ALL agents memory.
+ReMe gives YOUR agent memory. vault404 gives ALL agents memory.
 
 ## License
 

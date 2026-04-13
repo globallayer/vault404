@@ -1,4 +1,4 @@
-"""Storage backends for 404vault"""
+"""Storage backends for vault404"""
 
 import os
 from typing import Optional

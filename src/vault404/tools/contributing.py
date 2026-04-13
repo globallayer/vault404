@@ -1,5 +1,5 @@
 """
-Contribution tools for 404vault - opt-in sharing to community knowledge
+Contribution tools for vault404 - opt-in sharing to community knowledge
 
 This is the bridge between local storage and collective AI learning.
 

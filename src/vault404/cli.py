@@ -1,5 +1,5 @@
 """
-404vault Command Line Interface
+vault404 Command Line Interface
 
 Usage:
     vault404 stats           Show knowledge base statistics
@@ -40,7 +40,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
             print_json(result)
         else:
             stats = result.get("stats", {})
-            print("\n📊 404vault Statistics")
+            print("\n📊 vault404 Statistics")
             print("=" * 40)
             print(f"  Error Fixes:  {stats.get('error_fixes', 0)}")
             print(f"  Decisions:    {stats.get('decisions', 0)}")
@@ -75,9 +75,9 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def cmd_purge(args: argparse.Namespace) -> int:
-    """Delete all 404vault data."""
+    """Delete all vault404 data."""
     if not args.confirm:
-        print("\n⚠️  WARNING: This will permanently delete ALL 404vault data!")
+        print("\n⚠️  WARNING: This will permanently delete ALL vault404 data!")
         print("   This action cannot be undone.\n")
         confirm = input("   Type 'DELETE' to confirm: ")
         if confirm != "DELETE":
@@ -159,7 +159,7 @@ def cmd_encrypt(args: argparse.Namespace) -> int:
         print("\n✅ Encryption is already enabled.")
         return 0
 
-    print("\n🔐 Enabling encryption for 404vault data...")
+    print("\n🔐 Enabling encryption for vault404 data...")
     print("   This will encrypt all future data at rest using AES-256.")
 
     if args.password:
@@ -219,7 +219,7 @@ def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         prog="vault404",
-        description="404vault: AI Coding Agent Memory",
+        description="vault404: AI Coding Agent Memory",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

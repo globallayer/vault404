@@ -1,4 +1,4 @@
-"""Maintenance tools for 404vault - verify, update, stats, purge, export"""
+"""Maintenance tools for vault404 - verify, update, stats, purge, export"""
 
 import json
 from pathlib import Path
@@ -67,7 +67,7 @@ async def verify_solution(record_id: str, success: bool) -> dict:
 
 async def get_stats() -> dict:
     """
-    Get statistics about the 404vault knowledge base.
+    Get statistics about the vault404 knowledge base.
 
     Returns:
         dict with stats about records stored
@@ -85,13 +85,13 @@ async def get_stats() -> dict:
             "patterns": stats.get("patterns", 0),
             "data_directory": stats.get("data_dir", ""),
         },
-        "message": "404vault statistics retrieved",
+        "message": "vault404 statistics retrieved",
     }
 
 
 async def purge_all(confirm: bool = False) -> dict:
     """
-    Delete ALL 404vault data. This is IRREVERSIBLE.
+    Delete ALL vault404 data. This is IRREVERSIBLE.
 
     YOUR RIGHT TO DELETE: This implements GDPR Article 17.
     All your data will be permanently removed.
@@ -120,14 +120,14 @@ async def purge_all(confirm: bool = False) -> dict:
 
     return {
         "success": True,
-        "message": "All 404vault data has been permanently deleted.",
+        "message": "All vault404 data has been permanently deleted.",
         "deleted_path": str(data_dir),
     }
 
 
 async def export_all(output_path: Optional[str] = None) -> dict:
     """
-    Export ALL your 404vault data to a JSON file.
+    Export ALL your vault404 data to a JSON file.
 
     YOUR RIGHT TO DATA PORTABILITY: This implements GDPR Article 20.
     You can export all your data at any time.
@@ -158,7 +158,7 @@ async def export_all(output_path: Optional[str] = None) -> dict:
         },
         "metadata": {
             "format": "vault404-export-v1",
-            "description": "Complete export of 404vault knowledge base",
+            "description": "Complete export of vault404 knowledge base",
         }
     }
 
@@ -173,7 +173,7 @@ async def export_all(output_path: Optional[str] = None) -> dict:
 
     return {
         "success": True,
-        "message": f"Exported all 404vault data to {output_path}",
+        "message": f"Exported all vault404 data to {output_path}",
         "export_path": output_path,
         "records_exported": {
             "error_fixes": len(all_records.get("errors", [])),

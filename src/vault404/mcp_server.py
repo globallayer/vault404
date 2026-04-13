@@ -1,7 +1,7 @@
 """
-404vault MCP Server
+vault404 MCP Server
 
-Collective AI Coding 404vault.
+Collective AI Coding vault404.
 Every verified fix makes ALL AI agents smarter.
 Automatic sharing, fully anonymized.
 """
@@ -34,7 +34,7 @@ TOOLS = [
     # Recording tools
     Tool(
         name="log_error_fix",
-        description="""Log an error and its solution to the 404vault.
+        description="""Log an error and its solution to the vault404.
 
 Use this after fixing any error to build the knowledge base.
 Future encounters of similar errors will return this solution.
@@ -67,7 +67,7 @@ Optional: error_type, stack_trace, file, line, code_change, files_modified,
     ),
     Tool(
         name="log_decision",
-        description="""Log an architectural decision to the 404vault.
+        description="""Log an architectural decision to the vault404.
 
 Use this when making significant technical choices.
 Helps remember why decisions were made and their outcomes.
@@ -93,7 +93,7 @@ Optional: alternatives, pros, cons, deciding_factor, project, component, languag
     ),
     Tool(
         name="log_pattern",
-        description="""Log a reusable pattern to the 404vault.
+        description="""Log a reusable pattern to the vault404.
 
 Use this to capture patterns that solve recurring problems.
 Makes the knowledge reusable across projects.
@@ -121,7 +121,7 @@ Optional: languages, frameworks, databases, scenarios, before_code, after_code, 
     # Query tools
     Tool(
         name="find_solution",
-        description="""Find solutions for an error from the 404vault.
+        description="""Find solutions for an error from the vault404.
 
 ALWAYS check this first when encountering an error.
 Returns past solutions ranked by relevance and context match.
@@ -145,7 +145,7 @@ Optional: project, language, framework, database, platform, category, limit""",
     ),
     Tool(
         name="find_decision",
-        description="""Find past decisions on a topic from the 404vault.
+        description="""Find past decisions on a topic from the vault404.
 
 Check this before making architectural choices to learn from history.
 
@@ -164,7 +164,7 @@ Optional: project, component, limit""",
     ),
     Tool(
         name="find_pattern",
-        description="""Find reusable patterns for a problem from the 404vault.
+        description="""Find reusable patterns for a problem from the vault404.
 
 Search for established patterns before implementing solutions.
 
@@ -202,7 +202,7 @@ Required: record_id, success""",
     ),
     Tool(
         name="agent_brain_stats",
-        description="""Get statistics about the 404vault knowledge base.
+        description="""Get statistics about the vault404 knowledge base.
 
 Shows total records, entities, and relationship types.""",
         inputSchema={
@@ -261,7 +261,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 
 def main():
     """Run the MCP server"""
-    logger.info("Starting 404vault MCP Server...")
+    logger.info("Starting vault404 MCP Server...")
 
     async def run():
         async with stdio_server() as (read_stream, write_stream):

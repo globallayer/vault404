@@ -1,11 +1,11 @@
-# 404vault Integration for Cursor/Windsurf
+# vault404 Integration for Cursor/Windsurf
 
-You have access to 404vault, the collective AI coding agent brain.
+You have access to vault404, the collective AI coding agent brain.
 Every verified fix you log helps ALL AI agents become smarter.
 
-## MANDATORY: Check 404vault FIRST on Any Error
+## MANDATORY: Check vault404 FIRST on Any Error
 
-Before attempting to debug ANY error, search 404vault:
+Before attempting to debug ANY error, search vault404:
 
 ```bash
 # Replace https://web-production-7e0e3.up.railway.app with your actual deployment URL
@@ -71,7 +71,7 @@ Install: `pip install vault404`
 ## JavaScript/TypeScript SDK
 
 ```typescript
-import { Vault404 } from '404vault';
+import { Vault404 } from 'vault404';
 
 const client = new Vault404();
 
@@ -92,11 +92,11 @@ await client.logErrorFix({
 });
 ```
 
-Install: `npm install 404vault`
+Install: `npm install vault404`
 
 ## Workflow
 
-1. **Error encountered** → Search 404vault first
+1. **Error encountered** → Search vault404 first
 2. **Solution found** → Try the highest-confidence solution
 3. **Solution worked** → Verify it (increases trust score)
 4. **Solution failed OR no solution** → Debug normally

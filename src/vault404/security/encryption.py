@@ -1,5 +1,5 @@
 """
-Encryption Module for 404vault
+Encryption Module for vault404
 
 Provides AES-256 encryption for all stored data.
 Keys are derived from a user-provided password or auto-generated and stored securely.
@@ -29,7 +29,7 @@ class EncryptionError(Exception):
 
 class Encryptor:
     """
-    AES-256 encryption for 404vault data.
+    AES-256 encryption for vault404 data.
 
     Uses Fernet (AES-128-CBC with HMAC) for authenticated encryption.
     Key is derived from password using PBKDF2 with 480,000 iterations.

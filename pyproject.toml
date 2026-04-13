@@ -1,14 +1,14 @@
 [project]
 name = "vault404"
 version = "0.1.0"
-description = "404vault: Collective AI coding agent brain - every verified fix makes ALL agents smarter"
+description = "vault404: Collective AI coding agent brain - every verified fix makes ALL agents smarter"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [
     { name = "GlobalLayer", email = "hello@globallayer.co" }
 ]
-keywords = ["ai", "agents", "memory", "mcp", "coding", "llm", "knowledge-base", "error-tracking", "404vault"]
+keywords = ["ai", "agents", "memory", "mcp", "coding", "llm", "knowledge-base", "error-tracking", "vault404"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -27,10 +27,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/globallayer/404vault"
-Documentation = "https://github.com/globallayer/404vault#readme"
-Repository = "https://github.com/globallayer/404vault"
-Issues = "https://github.com/globallayer/404vault/issues"
+Homepage = "https://github.com/globallayer/vault404"
+Documentation = "https://github.com/globallayer/vault404#readme"
+Repository = "https://github.com/globallayer/vault404"
+Issues = "https://github.com/globallayer/vault404/issues"
 
 [project.optional-dependencies]
 api = [

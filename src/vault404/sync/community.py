@@ -1,8 +1,8 @@
 """
-Community Brain API Client for 404vault
+Community Brain API Client for vault404
 
 Connects to the shared knowledge repository where verified solutions
-from all 404vault users are aggregated.
+from all vault404 users are aggregated.
 
 The community brain:
 - Only accepts VERIFIED solutions
@@ -46,7 +46,7 @@ class CommunityBrainError(Exception):
 
 class CommunityBrain:
     """
-    Client for the 404vault Community Brain.
+    Client for the vault404 Community Brain.
 
     The community brain stores anonymized, verified solutions from all users.
     """

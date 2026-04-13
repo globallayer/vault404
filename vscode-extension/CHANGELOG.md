@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the 404vault VS Code extension will be documented in this file.
+All notable changes to the vault404 VS Code extension will be documented in this file.
 
 ## [0.1.0] - 2024-01-15
 

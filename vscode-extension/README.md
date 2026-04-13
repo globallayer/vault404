@@ -1,4 +1,4 @@
-# 404vault VS Code Extension
+# vault404 VS Code Extension
 
 **Collective AI Coding Agent Brain** - Brings community knowledge directly into your editor.
 
@@ -7,30 +7,30 @@ Every verified fix makes ALL AI agents smarter. Automatic sharing, fully anonymi
 ## Features
 
 ### Log Errors & Solutions
-When you fix a bug, log it to 404vault so you (and the community) can find it later.
+When you fix a bug, log it to vault404 so you (and the community) can find it later.
 
-- Right-click on selected text > "404vault: Log Error & Solution"
-- Or use Command Palette: `404vault: Log Error & Solution`
+- Right-click on selected text > "vault404: Log Error & Solution"
+- Or use Command Palette: `vault404: Log Error & Solution`
 
 ### Find Solutions
 When you encounter an error, search the knowledge base for solutions.
 
-- Select error text > Right-click > "404vault: Find Solution for Selected Text"
-- Or use Command Palette: `404vault: Find Solution for Error`
+- Select error text > Right-click > "vault404: Find Solution for Selected Text"
+- Or use Command Palette: `vault404: Find Solution for Error`
 
 ### Auto-Query on Error (Optional)
-When enabled, 404vault automatically searches for solutions when errors appear in the Problems panel.
+When enabled, vault404 automatically searches for solutions when errors appear in the Problems panel.
 
 ### Verify Solutions
 After applying a solution, verify it worked. Verified solutions are **automatically contributed** to the community brain.
 
-- Command Palette: `404vault: Verify Solution Worked`
+- Command Palette: `vault404: Verify Solution Worked`
 
 ### Log Decisions & Patterns
 Track architectural decisions and reusable patterns:
 
-- `404vault: Log Architectural Decision`
-- `404vault: Log Reusable Pattern`
+- `vault404: Log Architectural Decision`
+- `vault404: Log Reusable Pattern`
 
 ### Status Bar
 Shows current knowledge base stats. Click to view detailed statistics.
@@ -53,7 +53,7 @@ Shows current knowledge base stats. Click to view detailed statistics.
 
 ### From Source
 ```bash
-cd 404vault/vscode-extension
+cd vault404/vscode-extension
 npm install
 npm run compile
 ```
@@ -75,14 +75,14 @@ Then press F5 to launch Extension Development Host.
 
 | Command | Description |
 |---------|-------------|
-| `404vault: Log Error & Solution` | Log an error and its fix |
-| `404vault: Find Solution for Error` | Search for solutions |
-| `404vault: Find Solution for Selected Text` | Search using selected text |
-| `404vault: Verify Solution Worked` | Mark solution as working |
-| `404vault: Log Architectural Decision` | Record a decision |
-| `404vault: Log Reusable Pattern` | Record a pattern |
-| `404vault: Show Knowledge Base Stats` | View statistics |
-| `404vault: Refresh Stats` | Refresh status bar |
+| `vault404: Log Error & Solution` | Log an error and its fix |
+| `vault404: Find Solution for Error` | Search for solutions |
+| `vault404: Find Solution for Selected Text` | Search using selected text |
+| `vault404: Verify Solution Worked` | Mark solution as working |
+| `vault404: Log Architectural Decision` | Record a decision |
+| `vault404: Log Reusable Pattern` | Record a pattern |
+| `vault404: Show Knowledge Base Stats` | View statistics |
+| `vault404: Refresh Stats` | Refresh status bar |
 
 ## How It Works
 
@@ -90,7 +90,7 @@ Then press F5 to launch Extension Development Host.
 1. You fix an error
    |
    v
-2. Log it to 404vault (secrets auto-redacted)
+2. Log it to vault404 (secrets auto-redacted)
    |
    v
 3. Verify it worked
@@ -121,7 +121,7 @@ python -m vault404 stats
 The knowledge base grows over time. Start by logging your own fixes!
 
 ### Status bar shows "?"
-Check that Python and vault404 are properly installed. View the Output panel (View > Output > 404vault) for debug info.
+Check that Python and vault404 are properly installed. View the Output panel (View > Output > vault404) for debug info.
 
 ## Development
 

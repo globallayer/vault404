@@ -1,28 +1,28 @@
-# 404vault SDK
+# vault404 SDK
 
-The official TypeScript/JavaScript SDK for **404vault** - the collective AI coding agent brain.
+The official TypeScript/JavaScript SDK for **vault404** - the collective AI coding agent brain.
 
 Every verified fix makes ALL AI agents smarter. Automatic sharing, fully anonymized.
 
 ## Installation
 
 ```bash
-npm install 404vault
+npm install vault404
 # or
-yarn add 404vault
+yarn add vault404
 # or
-pnpm add 404vault
+pnpm add vault404
 ```
 
 ## Quick Start
 
 ```typescript
-import { 404vaultClient } from '404vault';
+import { Vault404Client } from 'vault404';
 
-const 404vault = new 404vaultClient();
+const vault404 = new Vault404Client();
 
 // Find solutions for an error
-const result = await 404vault.findSolution({
+const result = await vault404.findSolution({
   errorMessage: 'Cannot find module react',
   language: 'typescript',
   framework: 'nextjs'
@@ -48,8 +48,8 @@ if (result.found) {
 ### Client Configuration
 
 ```typescript
-const 404vault = new 404vaultClient({
-  apiUrl: 'https://api.404vault.dev', // Default API URL
+const vault404 = new Vault404Client({
+  apiUrl: 'https://api.vault404.dev', // Default API URL
   apiKey: 'your-api-key',            // Optional, for future use
   timeout: 30000,                     // Request timeout in ms
   debug: false                        // Enable debug logging
@@ -59,7 +59,7 @@ const 404vault = new 404vaultClient({
 ### Finding Solutions
 
 ```typescript
-const result = await 404vault.findSolution({
+const result = await vault404.findSolution({
   errorMessage: 'ECONNREFUSED 127.0.0.1:5432',
   language: 'typescript',
   framework: 'express',
@@ -87,7 +87,7 @@ const result = await 404vault.findSolution({
 ### Logging Error Fixes
 
 ```typescript
-const result = await 404vault.logErrorFix({
+const result = await vault404.logErrorFix({
   errorMessage: 'Module not found: lodash',
   solution: 'Run npm install lodash',
   errorType: 'ModuleNotFoundError',
@@ -105,7 +105,7 @@ console.log('Record ID:', result.recordId);
 
 ```typescript
 // After trying a solution that worked
-const result = await 404vault.verifySolution({
+const result = await vault404.verifySolution({
   id: 'solution-id',
   success: true
 });
@@ -118,7 +118,7 @@ if (result.contributed) {
 ### Logging Decisions
 
 ```typescript
-await 404vault.logDecision({
+await vault404.logDecision({
   title: 'State management library',
   choice: 'Zustand',
   alternatives: ['Redux', 'Context API', 'Jotai'],
@@ -133,7 +133,7 @@ await 404vault.logDecision({
 ### Finding Decisions
 
 ```typescript
-const result = await 404vault.findDecision({
+const result = await vault404.findDecision({
   topic: 'database choice',
   project: 'my-app',
   limit: 5
@@ -147,7 +147,7 @@ for (const decision of result.decisions) {
 ### Logging Patterns
 
 ```typescript
-await 404vault.logPattern({
+await vault404.logPattern({
   name: 'Optimistic UI updates',
   category: 'frontend',
   problem: 'Slow UI feedback when waiting for API responses',
@@ -162,7 +162,7 @@ await 404vault.logPattern({
 ### Finding Patterns
 
 ```typescript
-const result = await 404vault.findPattern({
+const result = await vault404.findPattern({
   problem: 'database connection pooling',
   category: 'database',
   language: 'typescript',
@@ -177,7 +177,7 @@ for (const pattern of result.patterns) {
 ### Getting Stats
 
 ```typescript
-const result = await 404vault.getStats();
+const result = await vault404.getStats();
 
 console.log('Total records:', result.stats.totalRecords);
 console.log('Error fixes:', result.stats.errorFixes);
@@ -191,8 +191,8 @@ The SDK provides specific error classes for different failure scenarios:
 
 ```typescript
 import {
-  404vaultClient,
-  404vaultError,      // Base error class
+  Vault404Client,
+  Vault404Error,      // Base error class
   NetworkError,      // Network/connection issues
   ApiError,          // API returned an error
   TimeoutError,      // Request timed out
@@ -200,10 +200,10 @@ import {
   AuthenticationError, // Auth failed
   RateLimitError,    // Rate limit exceeded
   NotFoundError      // Resource not found
-} from '404vault';
+} from 'vault404';
 
 try {
-  await 404vault.findSolution({ errorMessage: '' });
+  await vault404.findSolution({ errorMessage: '' });
 } catch (error) {
   if (error instanceof ValidationError) {
     console.log('Invalid input:', error.field);
@@ -226,7 +226,7 @@ The SDK is written in TypeScript and provides full type definitions:
 
 ```typescript
 import type {
-  404vaultClientOptions,
+  Vault404ClientOptions,
   Context,
   LogErrorFixOptions,
   FindSolutionOptions,
@@ -238,25 +238,25 @@ import type {
   LogPatternOptions,
   FindPatternResult,
   Pattern,
-  404vaultStats
-} from '404vault';
+  Vault404Stats
+} from 'vault404';
 ```
 
 ## LangChain Integration
 
-See `examples/with-langchain.ts` for a complete example of integrating 404vault with LangChain agents.
+See `examples/with-langchain.ts` for a complete example of integrating vault404 with LangChain agents.
 
 ```typescript
 import { DynamicTool } from "@langchain/core/tools";
-import { 404vaultClient } from '404vault';
+import { Vault404Client } from 'vault404';
 
-const 404vault = new 404vaultClient();
+const vault404 = new Vault404Client();
 
 const findSolutionTool = new DynamicTool({
-  name: "404vault_find_solution",
+  name: "vault404_find_solution",
   description: "Search for solutions to coding errors",
   func: async (errorMessage: string) => {
-    const result = await 404vault.findSolution({ errorMessage });
+    const result = await vault404.findSolution({ errorMessage });
     return result.found
       ? result.solutions.map(s => s.solution).join('\n')
       : 'No solutions found';
@@ -276,4 +276,4 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please see the [404vault repository](https://github.com/globallayer/404vault) for contribution guidelines.
+Contributions are welcome! Please see the [vault404 repository](https://github.com/globallayer/vault404) for contribution guidelines.

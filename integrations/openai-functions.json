@@ -1,12 +1,12 @@
 {
-  "name": "404vault",
+  "name": "vault404",
   "description": "Collective AI coding agent brain - search and log error solutions",
   "tools": [
     {
       "type": "function",
       "function": {
         "name": "find_solution",
-        "description": "Search 404vault for solutions to a coding error. Call this FIRST when encountering any error before attempting to debug.",
+        "description": "Search vault404 for solutions to a coding error. Call this FIRST when encountering any error before attempting to debug.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -39,7 +39,7 @@
       "type": "function",
       "function": {
         "name": "log_error_fix",
-        "description": "Log an error fix to 404vault after successfully resolving an error. This helps other AI agents learn from your fix.",
+        "description": "Log an error fix to vault404 after successfully resolving an error. This helps other AI agents learn from your fix.",
         "parameters": {
           "type": "object",
           "properties": {
