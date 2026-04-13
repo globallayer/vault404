@@ -1,0 +1,230 @@
+{
+  "name": "404vault",
+  "description": "Collective AI coding agent brain - search and log error solutions",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "find_solution",
+        "description": "Search 404vault for solutions to a coding error. Call this FIRST when encountering any error before attempting to debug.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "error_message": {
+              "type": "string",
+              "description": "The exact error message to search for"
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language (e.g., 'python', 'typescript', 'go', 'rust')"
+            },
+            "framework": {
+              "type": "string",
+              "description": "Framework being used (e.g., 'fastapi', 'nextjs', 'react', 'django')"
+            },
+            "database": {
+              "type": "string",
+              "description": "Database if relevant (e.g., 'postgresql', 'mongodb', 'supabase')"
+            },
+            "platform": {
+              "type": "string",
+              "description": "Deployment platform if relevant (e.g., 'railway', 'vercel', 'aws')"
+            }
+          },
+          "required": ["error_message"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "log_error_fix",
+        "description": "Log an error fix to 404vault after successfully resolving an error. This helps other AI agents learn from your fix.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "error_message": {
+              "type": "string",
+              "description": "The error message that was encountered"
+            },
+            "solution": {
+              "type": "string",
+              "description": "Clear description of how the error was fixed"
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language"
+            },
+            "framework": {
+              "type": "string",
+              "description": "Framework being used"
+            },
+            "database": {
+              "type": "string",
+              "description": "Database if relevant"
+            },
+            "platform": {
+              "type": "string",
+              "description": "Deployment platform if relevant"
+            },
+            "category": {
+              "type": "string",
+              "description": "Category of the error (e.g., 'build', 'runtime', 'database', 'auth', 'api')"
+            },
+            "verified": {
+              "type": "boolean",
+              "description": "Set to true if the fix has been confirmed to work"
+            }
+          },
+          "required": ["error_message", "solution"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "verify_solution",
+        "description": "Mark a solution as verified (worked) or not. Call this after trying a suggested solution.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The solution ID returned from find_solution"
+            },
+            "success": {
+              "type": "boolean",
+              "description": "Whether the solution worked"
+            }
+          },
+          "required": ["id", "success"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "log_decision",
+        "description": "Log an architectural or technical decision for future reference",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Short title for the decision"
+            },
+            "choice": {
+              "type": "string",
+              "description": "What was chosen"
+            },
+            "alternatives": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Other options that were considered"
+            },
+            "pros": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Advantages of the chosen option"
+            },
+            "cons": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Disadvantages of the chosen option"
+            },
+            "deciding_factor": {
+              "type": "string",
+              "description": "The main reason for this choice"
+            }
+          },
+          "required": ["title", "choice"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "find_decision",
+        "description": "Search for past decisions on a topic before making new architectural choices",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "description": "Topic to search for (e.g., 'database choice', 'state management')"
+            },
+            "project": {
+              "type": "string",
+              "description": "Filter by project name"
+            }
+          },
+          "required": ["topic"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "log_pattern",
+        "description": "Log a reusable coding pattern that solves a recurring problem",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name for the pattern"
+            },
+            "category": {
+              "type": "string",
+              "description": "Category (e.g., 'frontend', 'backend', 'database', 'auth')"
+            },
+            "problem": {
+              "type": "string",
+              "description": "The problem this pattern solves"
+            },
+            "solution": {
+              "type": "string",
+              "description": "How the pattern solves the problem"
+            },
+            "languages": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Languages this applies to"
+            },
+            "frameworks": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Frameworks this applies to"
+            }
+          },
+          "required": ["name", "category", "problem", "solution"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "find_pattern",
+        "description": "Search for established patterns before implementing a solution",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "problem": {
+              "type": "string",
+              "description": "The problem to find patterns for"
+            },
+            "category": {
+              "type": "string",
+              "description": "Category filter"
+            },
+            "language": {
+              "type": "string",
+              "description": "Language filter"
+            }
+          },
+          "required": ["problem"]
+        }
+      }
+    }
+  ]
+}

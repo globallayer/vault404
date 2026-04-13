@@ -52,7 +52,7 @@ from .types import (
 )
 
 
-DEFAULT_API_URL = "https://api.404vault.dev"
+DEFAULT_API_URL = "https://web-production-7e0e3.up.railway.app"
 DEFAULT_TIMEOUT = 30.0
 API_VERSION = "v1"
 SDK_VERSION = "0.1.0"

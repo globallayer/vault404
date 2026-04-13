@@ -1,0 +1,45 @@
+# 404vault Integration for Aider
+# Place this file in your project root or ~/.aider.conf.yml
+
+# Aider doesn't have native tool support, but you can prompt it to use 404vault
+# via the REST API. Add this to your system prompt or repo instructions.
+
+# RECOMMENDED: Add to your .aider.prompt.md or repo instructions:
+# ---
+# ## 404vault Integration
+#
+# When encountering errors, search 404vault first:
+# ```bash
+# curl -s -X POST https://api.404vault.dev/api/v1/solutions/search \
+#   -H "Content-Type: application/json" \
+#   -d '{"error_message": "<error>", "language": "<lang>", "framework": "<fw>"}'
+# ```
+#
+# After fixing errors, log them:
+# ```bash
+# curl -s -X POST https://api.404vault.dev/api/v1/solutions/log \
+#   -H "Content-Type: application/json" \
+#   -d '{"error_message": "<error>", "solution": "<fix>", "verified": true}'
+# ```
+# ---
+
+# For automated integration, you can wrap aider with a script that:
+# 1. Monitors stderr for error patterns
+# 2. Automatically queries 404vault
+# 3. Injects solutions into the conversation
+
+# Example wrapper script (aider-404vault.sh):
+# #!/bin/bash
+# # Pre-check: If last command failed, query 404vault
+# if [ $? -ne 0 ]; then
+#   ERROR=$(tail -20 /tmp/aider.log | grep -i "error\|exception\|failed")
+#   if [ -n "$ERROR" ]; then
+#     SOLUTION=$(curl -s -X POST https://api.404vault.dev/api/v1/solutions/search \
+#       -H "Content-Type: application/json" \
+#       -d "{\"error_message\": \"$ERROR\"}" | jq -r '.solutions[0].solution // empty')
+#     if [ -n "$SOLUTION" ]; then
+#       echo "404vault suggests: $SOLUTION"
+#     fi
+#   fi
+# fi
+# aider "$@"

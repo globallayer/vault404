@@ -46,7 +46,7 @@ import {
 /**
  * Default configuration values
  */
-const DEFAULT_API_URL = "https://api.vault404.dev";
+const DEFAULT_API_URL = "https://web-production-7e0e3.up.railway.app";
 const DEFAULT_TIMEOUT = 30000;
 const API_VERSION = "v1";
 
