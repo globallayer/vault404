@@ -6,10 +6,10 @@ Auto-installs sentence-transformers on first use if not available.
 """
 
 import logging
+import math
 import subprocess
 import sys
 from typing import Optional
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +141,8 @@ def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     """
     Calculate cosine similarity between two vectors.
 
+    Uses pure Python math (no numpy required) for portability.
+
     Args:
         vec1: First embedding vector
         vec2: Second embedding vector
@@ -151,18 +153,19 @@ def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     if vec1 is None or vec2 is None:
         return 0.0
 
-    try:
-        a = np.array(vec1)
-        b = np.array(vec2)
+    if len(vec1) != len(vec2):
+        return 0.0
 
-        # Handle zero vectors
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
+    try:
+        # Pure Python implementation (no numpy needed)
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        norm_a = math.sqrt(sum(a * a for a in vec1))
+        norm_b = math.sqrt(sum(b * b for b in vec2))
 
         if norm_a == 0 or norm_b == 0:
             return 0.0
 
-        return float(np.dot(a, b) / (norm_a * norm_b))
+        return dot_product / (norm_a * norm_b)
     except Exception:
         return 0.0
 
