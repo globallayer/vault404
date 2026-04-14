@@ -82,15 +82,23 @@ async def find_solution(
 
     if not all_results:
         return {
+            "_summary": "No solutions found",
             "found": False,
             "message": "No matching solutions found in vault404",
             "solutions": [],
             "suggestion": "After fixing this error, use log_error_fix to save the solution.",
         }
 
+    # Build compact summary
+    count = len(all_results)
+    top = all_results[0]
+    top_solution = top.get("solution", "")[:60]
+    summary = f"Found {count} solution(s). Top: {top_solution}..."
+
     return {
+        "_summary": summary,
         "found": True,
-        "message": f"Found {len(all_results)} potential solution(s)" + (f" ({community_count} from community)" if community_count else ""),
+        "message": f"Found {count} potential solution(s)" + (f" ({community_count} from community)" if community_count else ""),
         "solutions": [
             {
                 "id": r.get("id", ""),
@@ -140,15 +148,21 @@ async def find_decision(
 
     if not results:
         return {
+            "_summary": f"No decisions found for: {topic}",
             "found": False,
             "message": f"No past decisions found for: {topic}",
             "decisions": [],
             "suggestion": "After making a decision, use log_decision to save it.",
         }
 
+    count = len(results)
+    top = results[0]
+    summary = f"Found {count} decision(s). Top: {top.get('title', '')} → {top.get('choice', '')[:40]}"
+
     return {
+        "_summary": summary,
         "found": True,
-        "message": f"Found {len(results)} relevant decision(s)",
+        "message": f"Found {count} relevant decision(s)",
         "decisions": [
             {
                 "id": r.get("id", ""),
@@ -193,15 +207,21 @@ async def find_pattern(
 
     if not results:
         return {
+            "_summary": f"No patterns found for: {problem}",
             "found": False,
             "message": f"No patterns found for: {problem}",
             "patterns": [],
             "suggestion": "After solving this, use log_pattern to save the pattern.",
         }
 
+    count = len(results)
+    top = results[0]
+    summary = f"Found {count} pattern(s). Top: {top.get('name', '')}"
+
     return {
+        "_summary": summary,
         "found": True,
-        "message": f"Found {len(results)} relevant pattern(s)",
+        "message": f"Found {count} relevant pattern(s)",
         "patterns": [
             {
                 "id": r.get("id", ""),

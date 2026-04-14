@@ -86,6 +86,7 @@ async def log_error_fix(
     result = await storage.store_error_fix(record)
 
     return {
+        "_summary": f"✓ fix logged",
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged error fix: {safe_error_message[:50]}... -> {safe_solution[:50]}...",
@@ -143,6 +144,7 @@ async def log_decision(
     result = await storage.store_decision(record)
 
     return {
+        "_summary": f"✓ decision logged: {title}",
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged decision: {title} -> {choice}",
@@ -206,6 +208,7 @@ async def log_pattern(
     result = await storage.store_pattern(record)
 
     return {
+        "_summary": f"✓ pattern logged: {name}",
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged pattern: {name}",

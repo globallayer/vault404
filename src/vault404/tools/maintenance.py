@@ -41,6 +41,7 @@ async def verify_solution(record_id: str, success: bool) -> dict:
 
     status = "successful" if success else "unsuccessful"
     response = {
+        "_summary": f"✓ verified as {status}",
         "success": True,
         "message": f"Marked solution {record_id} as {status}",
         "record_id": record_id,
@@ -76,13 +77,19 @@ async def get_stats() -> dict:
 
     stats = await storage.get_stats()
 
+    total = stats.get("total_records", 0)
+    fixes = stats.get("errors", 0)
+    decisions = stats.get("decisions", 0)
+    patterns = stats.get("patterns", 0)
+
     return {
+        "_summary": f"vault404: {total} records ({fixes} fixes, {decisions} decisions, {patterns} patterns)",
         "success": True,
         "stats": {
-            "total_records": stats.get("total_records", 0),
-            "error_fixes": stats.get("errors", 0),
-            "decisions": stats.get("decisions", 0),
-            "patterns": stats.get("patterns", 0),
+            "total_records": total,
+            "error_fixes": fixes,
+            "decisions": decisions,
+            "patterns": patterns,
             "data_directory": stats.get("data_dir", ""),
         },
         "message": "vault404 statistics retrieved",

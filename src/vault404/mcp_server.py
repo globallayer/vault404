@@ -248,6 +248,9 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         else:
             result = {"error": f"Unknown tool: {name}"}
 
+        # Return compact summary if available, full result otherwise
+        if isinstance(result, dict) and "_summary" in result:
+            return [TextContent(type="text", text=result["_summary"])]
         return [TextContent(type="text", text=str(result))]
 
     except Exception as e:
