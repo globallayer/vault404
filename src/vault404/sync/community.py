@@ -12,11 +12,9 @@ The community brain:
 """
 
 import os
-import json
 import hashlib
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from pathlib import Path
+from typing import Optional, List, Dict
 
 # Try to import httpx for async HTTP (preferred), fallback to requests
 try:
@@ -24,7 +22,7 @@ try:
     HTTP_CLIENT = "httpx"
 except ImportError:
     try:
-        import requests
+        import requests  # noqa: F401 - used conditionally when HTTP_CLIENT == "requests"
         HTTP_CLIENT = "requests"
     except ImportError:
         HTTP_CLIENT = None
@@ -224,7 +222,7 @@ class CommunityBrain:
                 for r in results
             ]
 
-        except Exception as e:
+        except Exception:
             # Fail silently - local results will still work
             return []
 
@@ -263,7 +261,7 @@ class CommunityBrain:
                 )
                 response.raise_for_status()
                 return response.json()
-        except:
+        except Exception:
             return []
 
     async def search_patterns(
@@ -304,7 +302,7 @@ class CommunityBrain:
                 )
                 response.raise_for_status()
                 return response.json()
-        except:
+        except Exception:
             return []
 
     async def upvote(self, record_id: str) -> dict:

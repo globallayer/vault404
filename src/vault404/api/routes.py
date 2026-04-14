@@ -8,7 +8,7 @@ Includes rate limiting and API key authentication for write operations.
 import os
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, Depends, Request
 
 from .models import (
     # Solution models
@@ -38,7 +38,7 @@ from .models import (
 from .auth import require_api_key, optional_api_key
 from ..storage import get_storage, Context, ErrorFix, Decision, Pattern, ErrorInfo, SolutionInfo
 from ..security import redact_secrets
-from ..sync.community import federated_search, get_community_brain
+from ..sync.community import federated_search
 from ..sync.anonymizer import anonymize_record
 from ..sync.contribution import ContributionManager
 
@@ -268,7 +268,7 @@ async def verify_solution(
     contrib = get_contribution_manager()
 
     # Verify in storage
-    result = await storage.verify_solution(request.id, request.success)
+    await storage.verify_solution(request.id, request.success)
 
     contributed = False
     message = f"Marked solution {request.id} as {'successful' if request.success else 'unsuccessful'}"

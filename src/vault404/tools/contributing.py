@@ -12,7 +12,6 @@ WORKFLOW:
 """
 
 from typing import Optional
-from pathlib import Path
 from ..storage.local_storage import LocalStorage
 from ..sync.contribution import ContributionManager
 from ..sync.anonymizer import anonymize_record
@@ -51,7 +50,6 @@ async def prepare_contribution(record_id: str) -> dict:
         dict with anonymized record for review
     """
     storage = get_storage()
-    contrib = get_contribution_manager()
 
     # Load the full record
     filepath = storage.errors_dir / f"{record_id}.json"

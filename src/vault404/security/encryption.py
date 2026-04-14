@@ -7,7 +7,6 @@ Keys are derived from a user-provided password or auto-generated and stored secu
 
 import os
 import base64
-import hashlib
 import secrets
 from pathlib import Path
 from typing import Optional

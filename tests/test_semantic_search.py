@@ -12,7 +12,7 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from vault404.search import embeddings
 from vault404.storage.local_storage import LocalStorage
@@ -30,7 +30,6 @@ def temp_vault_dir():
     original_storage = storage_module._storage
     storage_module._storage = None
 
-    from vault404.storage.local_storage import LocalStorage
     storage_module._storage = LocalStorage(data_dir=Path(temp_dir))
 
     yield temp_dir

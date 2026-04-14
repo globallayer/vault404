@@ -1,6 +1,5 @@
 """Tests for vault404 API authentication."""
 
-import os
 import pytest
 from pathlib import Path
 import tempfile
@@ -13,7 +12,6 @@ from vault404.api.auth import (
     revoke_api_key,
     validate_api_key,
     load_api_keys,
-    save_api_keys,
     API_KEYS_FILE,
 )
 

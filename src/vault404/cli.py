@@ -15,8 +15,6 @@ import argparse
 import asyncio
 import json
 import sys
-import os
-from pathlib import Path
 
 # Fix Windows console encoding for Unicode
 if sys.platform == "win32":
@@ -45,7 +43,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
             print(f"  Error Fixes:  {stats.get('error_fixes', 0)}")
             print(f"  Decisions:    {stats.get('decisions', 0)}")
             print(f"  Patterns:     {stats.get('patterns', 0)}")
-            print(f"  ─────────────────────────")
+            print("  ─────────────────────────")
             print(f"  Total:        {stats.get('total_records', 0)}")
             print(f"\n  Data dir: {stats.get('data_directory', 'N/A')}")
         return 0
@@ -151,7 +149,6 @@ def cmd_search(args: argparse.Namespace) -> int:
 
 def cmd_encrypt(args: argparse.Namespace) -> int:
     """Enable encryption for data at rest."""
-    import os
 
     # Check if already encrypted
     storage = get_storage()
@@ -193,7 +190,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print("  pip install fastapi uvicorn")
         return 1
 
-    print(f"\n🚀 Starting Vault404 REST API server...")
+    print("\n🚀 Starting Vault404 REST API server...")
     print(f"   Host: {args.host}")
     print(f"   Port: {args.port}")
     print(f"   Docs: http://{args.host}:{args.port}/docs")

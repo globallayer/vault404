@@ -10,8 +10,6 @@ from vault404.api.models import (
     DecisionLogRequest,
     PatternLogRequest,
     MAX_ERROR_MESSAGE_LENGTH,
-    MAX_SOLUTION_LENGTH,
-    MIN_TEXT_LENGTH,
     MAX_LIST_ITEMS,
 )
 

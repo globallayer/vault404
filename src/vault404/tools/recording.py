@@ -86,7 +86,7 @@ async def log_error_fix(
     result = await storage.store_error_fix(record)
 
     return {
-        "_summary": f"✓ fix logged",
+        "_summary": "✓ fix logged",
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged error fix: {safe_error_message[:50]}... -> {safe_solution[:50]}...",

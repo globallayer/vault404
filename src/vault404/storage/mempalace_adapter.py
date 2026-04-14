@@ -1,7 +1,5 @@
 """Adapter for mempalace MCP server - wraps mempalace as storage backend"""
 
-import json
-import subprocess
 from typing import Optional
 from datetime import datetime
 

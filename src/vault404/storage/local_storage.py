@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional
 from difflib import SequenceMatcher
 
 from .schemas import ErrorFix, Decision, Pattern, Context

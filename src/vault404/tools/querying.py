@@ -3,7 +3,7 @@
 import os
 from typing import Optional
 from ..storage import get_storage, Context
-from ..sync.community import federated_search, get_community_brain
+from ..sync.community import federated_search
 
 # Enable community search via environment variable
 COMMUNITY_ENABLED = os.environ.get("VAULT404_COMMUNITY", "").lower() in ("true", "1", "yes")

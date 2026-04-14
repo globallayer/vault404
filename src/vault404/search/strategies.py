@@ -7,7 +7,6 @@ for better search recall without heavy dependencies.
 
 import re
 from difflib import SequenceMatcher
-from typing import Optional
 
 
 # Strategy weights for combining results

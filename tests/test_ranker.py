@@ -1,6 +1,5 @@
 """Tests for vault404 search ranking system."""
 
-import pytest
 from datetime import datetime, timedelta
 from vault404.search.ranker import (
     temporal_decay,

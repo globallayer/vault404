@@ -37,7 +37,7 @@ async def verify_solution(record_id: str, success: bool) -> dict:
     storage = get_storage()
     contrib = get_contribution_manager()
 
-    result = await storage.verify_solution(record_id, success)
+    await storage.verify_solution(record_id, success)
 
     status = "successful" if success else "unsuccessful"
     response = {
