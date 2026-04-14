@@ -143,12 +143,8 @@ vault404 understands *meaning*, not just keywords:
 - Embedding-based similarity using sentence-transformers
 - Hybrid scoring: 70% semantic + 30% keyword matching
 - Context-aware: language, framework, and recency boost relevant results
-- Works offline (falls back to keyword-only if embeddings unavailable)
-
-Install with semantic search:
-```bash
-pip install vault404[semantic]
-```
+- **Auto-installs** on first search (one-time ~90MB model download)
+- Falls back to keyword-only if install fails
 
 ## Trust & Ranking
 

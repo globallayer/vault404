@@ -2,10 +2,12 @@
 Embedding-based semantic search for vault404.
 
 Uses sentence-transformers with a lightweight model for local embedding generation.
-Falls back gracefully if sentence-transformers is not installed.
+Auto-installs sentence-transformers on first use if not available.
 """
 
 import logging
+import subprocess
+import sys
 from typing import Optional
 import numpy as np
 
@@ -14,14 +16,38 @@ logger = logging.getLogger(__name__)
 # Lazy-loaded model instance
 _model = None
 _model_load_attempted = False
+_install_attempted = False
 
 # Default model - small, fast, effective for code/error similarity
 DEFAULT_MODEL = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384  # Dimension for all-MiniLM-L6-v2
 
 
+def _auto_install_dependencies():
+    """Auto-install sentence-transformers if not available."""
+    global _install_attempted
+
+    if _install_attempted:
+        return False
+
+    _install_attempted = True
+
+    logger.info("Installing sentence-transformers for semantic search (one-time setup)...")
+    try:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "sentence-transformers>=2.2.0"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        logger.info("sentence-transformers installed successfully.")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Failed to auto-install sentence-transformers: {e}")
+        return False
+
+
 def _load_model():
-    """Lazy load the embedding model."""
+    """Lazy load the embedding model, auto-installing if needed."""
     global _model, _model_load_attempted
 
     if _model_load_attempted:
@@ -29,16 +55,28 @@ def _load_model():
 
     _model_load_attempted = True
 
+    # Try to import, auto-install if missing
     try:
         from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer(DEFAULT_MODEL)
-        logger.info(f"Loaded embedding model: {DEFAULT_MODEL}")
     except ImportError:
-        logger.warning(
-            "sentence-transformers not installed. "
-            "Semantic search disabled. Install with: pip install sentence-transformers"
-        )
-        _model = None
+        # Auto-install and retry
+        if _auto_install_dependencies():
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError:
+                logger.warning("sentence-transformers import failed after install.")
+                _model = None
+                return _model
+        else:
+            logger.warning("Semantic search unavailable. Falling back to keyword matching.")
+            _model = None
+            return _model
+
+    # Load the model
+    try:
+        logger.info(f"Loading embedding model: {DEFAULT_MODEL} (first run may download ~90MB)")
+        _model = SentenceTransformer(DEFAULT_MODEL)
+        logger.info("Embedding model loaded. Semantic search enabled.")
     except Exception as e:
         logger.warning(f"Failed to load embedding model: {e}")
         _model = None
