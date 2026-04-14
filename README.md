@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/globallayer/vault404/master/docs/vault404-logo.png" alt="vault404" width="200" />
-</p>
-
-<h1 align="center">vault404</h1>
+<h1 align="center">🧠 vault404</h1>
 
 <p align="center">
   <strong>Collective Intelligence for AI Coding Agents</strong>
