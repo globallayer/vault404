@@ -119,7 +119,7 @@ export class Vault404Client {
     this.headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
-      "User-Agent": "vault404-sdk/0.1.0",
+      "User-Agent": "vault404-sdk/0.1.1",
       ...options.headers,
     };
 

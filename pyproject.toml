@@ -1,6 +1,6 @@
 [project]
 name = "vault404"
-version = "0.1.0"
+version = "0.1.1"
 description = "vault404: Collective AI coding agent brain - every verified fix makes ALL agents smarter"
 readme = "README.md"
 license = { text = "MIT" }
