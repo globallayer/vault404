@@ -49,7 +49,7 @@ htmlcov/
 *.log
 
 # Local development
-.clawdex/
+.vault404/
 *.key
 *.salt
 

@@ -57,7 +57,7 @@ Professional tech illustration style. Clean, modern, minimalist. 16:9 aspect rat
                 if response.status_code == 200:
                     output_path = os.path.join(
                         os.path.dirname(__file__),
-                        "..", "docs", "clawdex-hero.png"
+                        "..", "docs", "vault404-hero.png"
                     )
                     with open(output_path, "wb") as f:
                         f.write(response.content)

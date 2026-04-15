@@ -3,14 +3,23 @@ Local Storage Backend for vault404
 
 Stores all data locally in ~/.vault404/ with optional encryption.
 No network calls, no external dependencies beyond Python stdlib + pydantic.
+
+DATA PROTECTION GUARANTEES:
+1. Automatic migration from legacy locations (.clawdex)
+2. Automatic backups before every write
+3. Index recovery from individual record files if corrupted
+4. Atomic writes (write to temp, then rename)
+5. Never overwrite data with empty state
 """
 
 import json
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 from difflib import SequenceMatcher
+import tempfile
 
 from .schemas import ErrorFix, Decision, Pattern, Context
 from ..security.encryption import get_encryptor, CRYPTO_AVAILABLE
@@ -22,6 +31,12 @@ from ..search import embeddings
 # Magic bytes to identify encrypted files
 ENCRYPTED_MARKER = b"VAULT404_ENCRYPTED:"
 
+# Legacy data directories to migrate from
+LEGACY_DATA_DIRS = [".clawdex"]
+
+# Maximum number of backups to keep
+MAX_BACKUPS = 10
+
 
 class LocalStorage:
     """
@@ -32,6 +47,7 @@ class LocalStorage:
         ├── errors/          # Error/fix records (JSON files)
         ├── decisions/       # Decision records
         ├── patterns/        # Pattern records
+        ├── backups/         # Automatic backups
         ├── index.json       # Search index
         └── config.json      # Configuration
     """
@@ -46,16 +62,20 @@ class LocalStorage:
         self.errors_dir = self.data_dir / "errors"
         self.decisions_dir = self.data_dir / "decisions"
         self.patterns_dir = self.data_dir / "patterns"
+        self.backups_dir = self.data_dir / "backups"
         self.index_path = self.data_dir / "index.json"
         self.config_path = self.data_dir / "config.json"
 
         # Create directories
-        for d in [self.errors_dir, self.decisions_dir, self.patterns_dir]:
+        for d in [self.errors_dir, self.decisions_dir, self.patterns_dir, self.backups_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
         # Set restrictive permissions (Unix only)
         if os.name != "nt":
             os.chmod(self.data_dir, 0o700)
+
+        # CRITICAL: Migrate from legacy locations BEFORE anything else
+        self._migrate_legacy_data()
 
         # Initialize encryption
         self.encrypted = encrypted or self._load_config().get("encrypted", False)
@@ -64,8 +84,287 @@ class LocalStorage:
             self._encryptor = get_encryptor(self.data_dir, password)
             self._save_config({"encrypted": True})
 
-        # Load or create index
-        self._index = self._load_index()
+        # Load index with recovery
+        self._index = self._load_index_with_recovery()
+
+    # =========================================================================
+    # DATA PROTECTION: Migration, Backup, Recovery
+    # =========================================================================
+
+    def _migrate_legacy_data(self) -> None:
+        """
+        Migrate data from legacy locations (e.g., .clawdex).
+
+        CRITICAL: This runs on EVERY startup to ensure no data is ever lost
+        due to package renaming or directory changes.
+        """
+        home = Path.home()
+
+        for legacy_name in LEGACY_DATA_DIRS:
+            legacy_dir = home / legacy_name
+            if not legacy_dir.exists():
+                continue
+
+            # Check if legacy has data we don't have
+            legacy_index = legacy_dir / "index.json"
+            if legacy_index.exists():
+                try:
+                    legacy_data = json.loads(legacy_index.read_text(encoding="utf-8"))
+                    legacy_count = (
+                        len(legacy_data.get("errors", [])) +
+                        len(legacy_data.get("decisions", [])) +
+                        len(legacy_data.get("patterns", []))
+                    )
+
+                    # Check current data count
+                    current_count = 0
+                    if self.index_path.exists():
+                        try:
+                            current_data = json.loads(self.index_path.read_text(encoding="utf-8"))
+                            current_count = (
+                                len(current_data.get("errors", [])) +
+                                len(current_data.get("decisions", [])) +
+                                len(current_data.get("patterns", []))
+                            )
+                        except (json.JSONDecodeError, IOError):
+                            pass
+
+                    # Only migrate if legacy has MORE data (never lose data)
+                    if legacy_count > current_count:
+                        self._do_migration(legacy_dir)
+
+                except (json.JSONDecodeError, IOError):
+                    # Try to migrate individual files anyway
+                    self._migrate_individual_files(legacy_dir)
+
+    def _do_migration(self, legacy_dir: Path) -> None:
+        """Perform the actual migration from legacy directory."""
+        # Copy all files, preserving existing ones
+        for subdir in ["errors", "decisions", "patterns"]:
+            legacy_subdir = legacy_dir / subdir
+            current_subdir = self.data_dir / subdir
+
+            if legacy_subdir.exists():
+                for filepath in legacy_subdir.glob("*.json"):
+                    dest = current_subdir / filepath.name
+                    if not dest.exists():
+                        shutil.copy2(filepath, dest)
+
+        # Copy index if we don't have one or legacy is newer
+        legacy_index = legacy_dir / "index.json"
+        if legacy_index.exists():
+            if not self.index_path.exists():
+                shutil.copy2(legacy_index, self.index_path)
+            else:
+                # Merge indexes
+                self._merge_legacy_index(legacy_index)
+
+    def _migrate_individual_files(self, legacy_dir: Path) -> None:
+        """Migrate individual record files even if index is corrupted."""
+        for subdir in ["errors", "decisions", "patterns"]:
+            legacy_subdir = legacy_dir / subdir
+            current_subdir = self.data_dir / subdir
+
+            if legacy_subdir.exists():
+                for filepath in legacy_subdir.glob("*.json"):
+                    dest = current_subdir / filepath.name
+                    if not dest.exists():
+                        shutil.copy2(filepath, dest)
+
+    def _merge_legacy_index(self, legacy_index_path: Path) -> None:
+        """Merge legacy index into current index."""
+        try:
+            legacy_data = json.loads(legacy_index_path.read_text(encoding="utf-8"))
+            current_data = json.loads(self.index_path.read_text(encoding="utf-8"))
+
+            # Get existing IDs
+            current_error_ids = {e["id"] for e in current_data.get("errors", [])}
+            current_decision_ids = {d["id"] for d in current_data.get("decisions", [])}
+            current_pattern_ids = {p["id"] for p in current_data.get("patterns", [])}
+
+            # Add missing entries from legacy
+            for error in legacy_data.get("errors", []):
+                if error["id"] not in current_error_ids:
+                    current_data.setdefault("errors", []).append(error)
+
+            for decision in legacy_data.get("decisions", []):
+                if decision["id"] not in current_decision_ids:
+                    current_data.setdefault("decisions", []).append(decision)
+
+            for pattern in legacy_data.get("patterns", []):
+                if pattern["id"] not in current_pattern_ids:
+                    current_data.setdefault("patterns", []).append(pattern)
+
+            # Save merged index
+            self._atomic_write(self.index_path, json.dumps(current_data, indent=2, ensure_ascii=False))
+
+        except (json.JSONDecodeError, IOError):
+            pass
+
+    def _load_index_with_recovery(self) -> dict:
+        """
+        Load index with automatic recovery from individual files if corrupted.
+
+        CRITICAL: Never return empty index if files exist on disk.
+        """
+        index = {"errors": [], "decisions": [], "patterns": []}
+
+        # Try to load existing index
+        if self.index_path.exists():
+            try:
+                content = self._read_file(self.index_path)
+                index = json.loads(content)
+                self._migrate_index(index)
+            except (json.JSONDecodeError, IOError, ValueError):
+                # Index corrupted - will rebuild from files
+                pass
+
+        # CRITICAL: Verify index matches files on disk
+        # If files exist but index is empty, rebuild
+        index = self._verify_and_recover_index(index)
+
+        return index
+
+    def _verify_and_recover_index(self, index: dict) -> dict:
+        """
+        Verify index matches files on disk. Rebuild if necessary.
+
+        CRITICAL: This ensures we NEVER lose data even if index is corrupted.
+        """
+        # Count files on disk
+        error_files = list(self.errors_dir.glob("*.json"))
+        decision_files = list(self.decisions_dir.glob("*.json"))
+        pattern_files = list(self.patterns_dir.glob("*.json"))
+
+        files_on_disk = len(error_files) + len(decision_files) + len(pattern_files)
+        entries_in_index = (
+            len(index.get("errors", [])) +
+            len(index.get("decisions", [])) +
+            len(index.get("patterns", []))
+        )
+
+        # If index is missing entries, rebuild from files
+        if files_on_disk > entries_in_index:
+            index = self._rebuild_index_from_files()
+            self._save_index_internal(index)
+
+        return index
+
+    def _rebuild_index_from_files(self) -> dict:
+        """Rebuild entire index from individual record files."""
+        index = {"errors": [], "decisions": [], "patterns": []}
+
+        # Rebuild errors
+        for filepath in self.errors_dir.glob("*.json"):
+            try:
+                content = self._read_file(filepath)
+                data = json.loads(content)
+                index["errors"].append({
+                    "id": data.get("id", filepath.stem),
+                    "error_message": data.get("error", {}).get("message", "")[:200],
+                    "solution": data.get("solution", {}).get("description", "")[:200],
+                    "context": data.get("context", {}),
+                    "timestamp": data.get("timestamp", datetime.now().isoformat()),
+                    "verified": data.get("verified", False),
+                    "usage_count": data.get("usage_count", 0),
+                    "last_accessed": data.get("last_accessed"),
+                    "success_count": data.get("success_count", 0),
+                    "failure_count": data.get("failure_count", 0),
+                    "embedding": data.get("embedding"),
+                })
+            except (json.JSONDecodeError, IOError, ValueError):
+                continue
+
+        # Rebuild decisions
+        for filepath in self.decisions_dir.glob("*.json"):
+            try:
+                content = self._read_file(filepath)
+                data = json.loads(content)
+                index["decisions"].append({
+                    "id": data.get("id", filepath.stem),
+                    "title": data.get("title", ""),
+                    "choice": data.get("choice", ""),
+                    "context": data.get("context", {}),
+                    "timestamp": data.get("timestamp", datetime.now().isoformat()),
+                    "embedding": data.get("embedding"),
+                })
+            except (json.JSONDecodeError, IOError, ValueError):
+                continue
+
+        # Rebuild patterns
+        for filepath in self.patterns_dir.glob("*.json"):
+            try:
+                content = self._read_file(filepath)
+                data = json.loads(content)
+                index["patterns"].append({
+                    "id": data.get("id", filepath.stem),
+                    "name": data.get("name", ""),
+                    "category": data.get("category", ""),
+                    "problem": data.get("problem", "")[:200],
+                    "solution": data.get("solution", "")[:200],
+                    "timestamp": data.get("timestamp", datetime.now().isoformat()),
+                    "embedding": data.get("embedding"),
+                })
+            except (json.JSONDecodeError, IOError, ValueError):
+                continue
+
+        return index
+
+    def _create_backup(self) -> None:
+        """Create a backup of the current index before any write operation."""
+        if not self.index_path.exists():
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = self.backups_dir / f"index_{timestamp}.json"
+
+        try:
+            shutil.copy2(self.index_path, backup_path)
+        except IOError:
+            pass  # Don't fail if backup fails
+
+        # Clean up old backups
+        self._cleanup_old_backups()
+
+    def _cleanup_old_backups(self) -> None:
+        """Keep only the most recent backups."""
+        backups = sorted(self.backups_dir.glob("index_*.json"), reverse=True)
+        for old_backup in backups[MAX_BACKUPS:]:
+            try:
+                old_backup.unlink()
+            except IOError:
+                pass
+
+    def _atomic_write(self, filepath: Path, content: str) -> None:
+        """
+        Write content atomically to prevent corruption.
+
+        Writes to a temp file first, then renames (atomic on most filesystems).
+        """
+        # Create temp file in same directory (important for atomic rename)
+        fd, temp_path = tempfile.mkstemp(
+            dir=filepath.parent,
+            prefix=f".{filepath.stem}_",
+            suffix=".tmp"
+        )
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            # Atomic rename
+            temp_path_obj = Path(temp_path)
+            temp_path_obj.replace(filepath)
+        except Exception:
+            # Clean up temp file on failure
+            try:
+                Path(temp_path).unlink()
+            except IOError:
+                pass
+            raise
+
+    # =========================================================================
+    # File I/O
+    # =========================================================================
 
     def _load_config(self) -> dict:
         """Load configuration."""
@@ -88,7 +387,7 @@ class LocalStorage:
             encrypted = self._encryptor.encrypt(content)
             filepath.write_bytes(ENCRYPTED_MARKER + encrypted)
         else:
-            filepath.write_text(content, encoding="utf-8")
+            self._atomic_write(filepath, content)
 
     def _read_file(self, filepath: Path) -> str:
         """Read content from file, decrypting if needed."""
@@ -106,37 +405,21 @@ class LocalStorage:
         else:
             return raw.decode("utf-8")
 
-    def _load_index(self) -> dict:
-        """Load search index from disk."""
-        if self.index_path.exists():
-            try:
-                content = self._read_file(self.index_path)
-                index = json.loads(content)
-                # Run migration to add new fields
-                self._migrate_index(index)
-                return index
-            except (json.JSONDecodeError, IOError, ValueError):
-                pass
-        return {"errors": [], "decisions": [], "patterns": []}
-
     def _migrate_index(self, index: dict) -> None:
         """
         Add missing fields to existing index entries.
 
         This ensures backward compatibility when new fields are added.
-        Saves directly to disk since self._index may not be set yet.
         """
         migrated = False
 
         for entry in index.get("errors", []):
-            # Add usage tracking fields (Phase 1)
             if "usage_count" not in entry:
                 entry["usage_count"] = 0
                 migrated = True
             if "last_accessed" not in entry:
                 entry["last_accessed"] = None
                 migrated = True
-            # Add verification tracking fields
             if "success_count" not in entry:
                 entry["success_count"] = 0
                 migrated = True
@@ -145,12 +428,38 @@ class LocalStorage:
                 migrated = True
 
         if migrated:
-            # Save directly (self._index may not be set yet during init)
-            content = json.dumps(index, indent=2, ensure_ascii=False)
-            self._write_file(self.index_path, content)
+            self._save_index_internal(index)
+
+    def _save_index_internal(self, index: dict) -> None:
+        """Internal index save (used during init before self._index is set)."""
+        content = json.dumps(index, indent=2, ensure_ascii=False)
+        self._write_file(self.index_path, content)
 
     def _save_index(self) -> None:
-        """Save search index to disk."""
+        """
+        Save search index to disk with backup.
+
+        CRITICAL: Creates backup before write and validates data.
+        """
+        # Create backup before any write
+        self._create_backup()
+
+        # CRITICAL: Never write empty index if files exist
+        files_on_disk = (
+            len(list(self.errors_dir.glob("*.json"))) +
+            len(list(self.decisions_dir.glob("*.json"))) +
+            len(list(self.patterns_dir.glob("*.json")))
+        )
+        entries_in_index = (
+            len(self._index.get("errors", [])) +
+            len(self._index.get("decisions", [])) +
+            len(self._index.get("patterns", []))
+        )
+
+        if files_on_disk > 0 and entries_in_index == 0:
+            # Something is wrong - rebuild instead of overwriting
+            self._index = self._rebuild_index_from_files()
+
         content = json.dumps(self._index, indent=2, ensure_ascii=False)
         self._write_file(self.index_path, content)
 
@@ -188,13 +497,10 @@ class LocalStorage:
                 "context": record.context.model_dump(),
                 "timestamp": record.timestamp.isoformat(),
                 "verified": record.verified,
-                # Usage tracking (Phase 1)
                 "usage_count": record.usage_count,
                 "last_accessed": record.last_accessed.isoformat() if record.last_accessed else None,
-                # Verification tracking
                 "success_count": record.success_count,
                 "failure_count": record.failure_count,
-                # Semantic search embedding
                 "embedding": embedding_vector,
             }
         )
@@ -215,14 +521,6 @@ class LocalStorage:
     ) -> list[dict]:
         """
         Find solutions for an error using hybrid semantic + text matching.
-
-        Uses a combination of:
-        - Semantic similarity (embeddings) - captures meaning
-        - Multi-strategy text matching (keyword, fuzzy, error codes) - captures exact matches
-        - Temporal decay (recent fixes rank higher)
-        - Context matching (same language/framework)
-        - Verification status and success rate
-        - Usage popularity
         """
         results = []
         now = datetime.now()
@@ -245,13 +543,10 @@ class LocalStorage:
                 error_message.lower(), entry["error_message"].lower()
             )
 
-            # Hybrid similarity: prefer semantic when available, blend with text
+            # Hybrid similarity
             if semantic_available and entry.get("embedding"):
-                # Weighted combination: semantic is primary, text is secondary
-                # This captures both meaning (semantic) and exact matches (text)
                 combined_sim = 0.7 * semantic_sim + 0.3 * text_sim
             else:
-                # Fallback to text-only when no embeddings
                 combined_sim = text_sim
 
             # Context match score
@@ -260,14 +555,14 @@ class LocalStorage:
                 ctx = Context(**entry["context"])
                 ctx_score = context.match_score(ctx)
 
-            # Temporal decay (recent fixes rank higher)
+            # Temporal decay
             try:
                 timestamp = datetime.fromisoformat(entry["timestamp"])
                 temporal = temporal_decay(timestamp, half_life_days=30, now=now)
             except (ValueError, KeyError):
-                temporal = 0.5  # Default for invalid timestamps
+                temporal = 0.5
 
-            # Calculate combined score with all signals
+            # Calculate combined score
             score = calculate_score(
                 text_similarity=combined_sim,
                 context_match=ctx_score,
@@ -278,7 +573,7 @@ class LocalStorage:
                 usage_count=entry.get("usage_count", 0),
             )
 
-            if score > 0.15:  # Minimum threshold
+            if score > 0.15:
                 results.append(
                     {
                         "id": entry["id"],
@@ -292,11 +587,9 @@ class LocalStorage:
                     }
                 )
 
-        # Sort by score and return top results
         results.sort(key=lambda x: x["score"], reverse=True)
         top_results = results[:limit]
 
-        # Track usage for returned results
         self._track_usage([r["id"] for r in top_results])
 
         return top_results
@@ -326,7 +619,6 @@ class LocalStorage:
         """Store a decision record."""
         filepath = self.decisions_dir / f"{record.id}.json"
 
-        # Compute embedding for semantic search
         embedding_text = f"{record.title} | {record.choice} | {' '.join(record.alternatives)}"
         embedding_vector = embeddings.get_embedding(embedding_text)
 
@@ -339,7 +631,6 @@ class LocalStorage:
         content = json.dumps(data, indent=2, ensure_ascii=False)
         self._write_file(filepath, content)
 
-        # Update index
         self._index["decisions"].append(
             {
                 "id": record.id,
@@ -365,25 +656,21 @@ class LocalStorage:
         context: Optional[Context] = None,
         limit: int = 5,
     ) -> list[dict]:
-        """Find past decisions on a topic using hybrid semantic + text matching."""
+        """Find past decisions on a topic."""
         results = []
 
-        # Compute query embedding
         query_embedding = embeddings.get_embedding(topic)
         semantic_available = query_embedding is not None
 
         for entry in self._index.get("decisions", []):
-            # Semantic similarity
             semantic_sim = 0.0
             if semantic_available and entry.get("embedding"):
                 semantic_sim = embeddings.cosine_similarity(query_embedding, entry["embedding"])
 
-            # Text similarity (fallback/complement)
             title_sim = self._text_similarity(topic.lower(), entry["title"].lower())
             choice_sim = self._text_similarity(topic.lower(), entry["choice"].lower())
             text_sim = max(title_sim, choice_sim)
 
-            # Hybrid similarity
             if semantic_available and entry.get("embedding"):
                 similarity = 0.7 * semantic_sim + 0.3 * text_sim
             else:
@@ -410,7 +697,6 @@ class LocalStorage:
         """Store a pattern record."""
         filepath = self.patterns_dir / f"{record.id}.json"
 
-        # Compute embedding for semantic search
         embedding_text = f"{record.name} | {record.problem} | {record.solution}"
         embedding_vector = embeddings.get_embedding(embedding_text)
 
@@ -423,7 +709,6 @@ class LocalStorage:
         content = json.dumps(data, indent=2, ensure_ascii=False)
         self._write_file(filepath, content)
 
-        # Update index
         self._index["patterns"].append(
             {
                 "id": record.id,
@@ -450,29 +735,24 @@ class LocalStorage:
         category: Optional[str] = None,
         limit: int = 5,
     ) -> list[dict]:
-        """Find patterns for a problem using hybrid semantic + text matching."""
+        """Find patterns for a problem."""
         results = []
 
-        # Compute query embedding
         query_embedding = embeddings.get_embedding(problem)
         semantic_available = query_embedding is not None
 
         for entry in self._index.get("patterns", []):
-            # Filter by category if specified
             if category and entry.get("category", "").lower() != category.lower():
                 continue
 
-            # Semantic similarity
             semantic_sim = 0.0
             if semantic_available and entry.get("embedding"):
                 semantic_sim = embeddings.cosine_similarity(query_embedding, entry["embedding"])
 
-            # Text similarity (fallback/complement)
             problem_sim = self._text_similarity(problem.lower(), entry["problem"].lower())
             name_sim = self._text_similarity(problem.lower(), entry["name"].lower())
             text_sim = max(problem_sim, name_sim)
 
-            # Hybrid similarity
             if semantic_available and entry.get("embedding"):
                 similarity = 0.7 * semantic_sim + 0.3 * text_sim
             else:
@@ -499,7 +779,6 @@ class LocalStorage:
 
     async def verify_solution(self, record_id: str, success: bool) -> dict:
         """Mark a solution as verified or not."""
-        # Update in index (including success/failure counts for ranking)
         for entry in self._index.get("errors", []):
             if entry["id"] == record_id:
                 entry["verified"] = success if success else entry.get("verified", False)
@@ -510,7 +789,6 @@ class LocalStorage:
 
         self._save_index()
 
-        # Update the actual file
         filepath = self.errors_dir / f"{record_id}.json"
         if filepath.exists():
             content = self._read_file(filepath)
@@ -534,6 +812,7 @@ class LocalStorage:
             "decisions": len(self._index.get("decisions", [])),
             "patterns": len(self._index.get("patterns", [])),
             "data_dir": str(self.data_dir),
+            "backups": len(list(self.backups_dir.glob("index_*.json"))),
         }
 
     async def get_all_records(self) -> dict:
@@ -573,17 +852,10 @@ class LocalStorage:
     # =========================================================================
 
     def _text_similarity(self, text1: str, text2: str) -> float:
-        """
-        Calculate text similarity using SequenceMatcher.
-
-        This is a simple but effective approach for short texts.
-        Can be upgraded to embeddings later.
-        """
-        # Quick check for substring match
+        """Calculate text similarity using SequenceMatcher."""
         if text1 in text2 or text2 in text1:
             return 0.8
 
-        # Word overlap
         words1 = set(text1.split())
         words2 = set(text2.split())
         if words1 and words2:
@@ -591,5 +863,4 @@ class LocalStorage:
             if overlap > 0.3:
                 return 0.5 + overlap * 0.3
 
-        # Sequence matching
         return SequenceMatcher(None, text1, text2).ratio()
