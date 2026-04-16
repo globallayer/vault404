@@ -354,7 +354,7 @@ class CommunityBrain:
                     response = await client.get(
                         f"{self.api_url}/community_solutions",
                         headers=self._get_headers(),
-                        params={"select": "id,record_type,category"},
+                        params={"select": "id,record_type,category,contributor_hash"},
                         timeout=10.0,
                     )
                     response.raise_for_status()
@@ -365,7 +365,7 @@ class CommunityBrain:
                 response = requests.get(
                     f"{self.api_url}/community_solutions",
                     headers=self._get_headers(),
-                    params={"select": "id,record_type,category"},
+                    params={"select": "id,record_type,category,contributor_hash"},
                     timeout=10,
                 )
                 response.raise_for_status()
@@ -383,6 +383,12 @@ class CommunityBrain:
                 cat = r.get("category", "uncategorized")
                 categories[cat] = categories.get(cat, 0) + 1
 
+            # Count unique contributors
+            unique_contributors = len(set(
+                r.get("contributor_hash") for r in results
+                if r.get("contributor_hash")
+            ))
+
             return {
                 "success": True,
                 "total": total,
@@ -390,6 +396,7 @@ class CommunityBrain:
                 "decisions": decisions,
                 "patterns": patterns,
                 "categories": categories,
+                "unique_contributors": unique_contributors,
             }
 
         except Exception as e:
@@ -400,6 +407,7 @@ class CommunityBrain:
                 "fixes": 0,
                 "decisions": 0,
                 "patterns": 0,
+                "unique_contributors": 0,
             }
 
     def _calculate_relevance(self, query: str, record: dict) -> float:

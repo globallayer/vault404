@@ -421,10 +421,11 @@ class TestGetStats:
         result = await get_stats()
 
         assert result["success"] is True
-        assert result["stats"]["total_records"] == 0
-        assert result["stats"]["error_fixes"] == 0
-        assert result["stats"]["decisions"] == 0
-        assert result["stats"]["patterns"] == 0
+        # Local stats should be zero
+        assert result["stats"]["local"]["total"] == 0
+        assert result["stats"]["local"]["fixes"] == 0
+        assert result["stats"]["local"]["decisions"] == 0
+        assert result["stats"]["local"]["patterns"] == 0
         assert "_summary" in result
 
     @pytest.mark.asyncio
@@ -452,10 +453,11 @@ class TestGetStats:
 
         result = await get_stats()
 
-        assert result["stats"]["total_records"] == 4
-        assert result["stats"]["error_fixes"] == 2
-        assert result["stats"]["decisions"] == 1
-        assert result["stats"]["patterns"] == 1
+        # Local stats should reflect the logged records
+        assert result["stats"]["local"]["total"] == 4
+        assert result["stats"]["local"]["fixes"] == 2
+        assert result["stats"]["local"]["decisions"] == 1
+        assert result["stats"]["local"]["patterns"] == 1
 
 
 class TestPurgeAll:
@@ -480,7 +482,7 @@ class TestPurgeAll:
 
         # Verify data exists
         stats_before = await get_stats()
-        assert stats_before["stats"]["total_records"] > 0
+        assert stats_before["stats"]["local"]["total"] > 0
 
         # Purge
         result = await purge_all(confirm=True)
@@ -582,7 +584,7 @@ class TestMCPToolsIntegration:
 
         # 4. Check stats
         stats_result = await get_stats()
-        assert stats_result["stats"]["error_fixes"] == 1
+        assert stats_result["stats"]["local"]["fixes"] == 1
 
     @pytest.mark.asyncio
     async def test_multiple_similar_solutions(self, temp_vault_dir):

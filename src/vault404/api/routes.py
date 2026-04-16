@@ -38,7 +38,7 @@ from .models import (
 from .auth import require_api_key, optional_api_key
 from ..storage import get_storage, Context, ErrorFix, Decision, Pattern, ErrorInfo, SolutionInfo
 from ..security import redact_secrets
-from ..sync.community import federated_search
+from ..sync.community import federated_search, CommunityBrain
 from ..sync.anonymizer import anonymize_record
 from ..sync.contribution import ContributionManager
 
@@ -541,3 +541,43 @@ async def health_check() -> HealthResponse:
         version=API_VERSION,
         storage_available=storage_available,
     )
+
+
+@stats_router.get("/badge/{metric}")
+async def get_badge(metric: str) -> dict:
+    """
+    Get a Shields.io compatible badge for community stats.
+
+    Supported metrics:
+    - fixes: Total error fixes in the community brain
+    - contributors: Unique contributors
+    - brain: Total solutions (all types)
+
+    Returns JSON in Shields.io endpoint format:
+    https://shields.io/badges/endpoint-badge
+    """
+    community = CommunityBrain()
+    stats = await community.get_stats()
+
+    badges = {
+        "fixes": {
+            "schemaVersion": 1,
+            "label": "fixes",
+            "message": str(stats.get("fixes", 0)),
+            "color": "blue",
+        },
+        "contributors": {
+            "schemaVersion": 1,
+            "label": "contributors",
+            "message": str(stats.get("unique_contributors", 0)),
+            "color": "green",
+        },
+        "brain": {
+            "schemaVersion": 1,
+            "label": "brain size",
+            "message": f"{stats.get('total', 0)} solutions",
+            "color": "purple",
+        },
+    }
+
+    return badges.get(metric, badges["brain"])
