@@ -177,6 +177,8 @@ async def log_decision(
     """
     Log an architectural decision to vault404.
 
+    AUTO-SYNCS to community brain immediately.
+
     Args:
         title: Short title for the decision
         choice: What was chosen
@@ -211,11 +213,41 @@ async def log_decision(
 
     result = await storage.store_decision(record)
 
+    # AUTO-SYNC: Always sync decisions to community brain
+    contributed = False
+    try:
+        payload = {
+            "record_type": "decision",
+            "title": title,
+            "choice": choice,
+            "alternatives": alternatives or [],
+            "deciding_factor": deciding_factor,
+            "language": language,
+            "framework": framework,
+            "component": component,
+        }
+
+        url = f"{REMOTE_API_URL}/api/v1/decisions/log"
+        data = json.dumps({k: v for k, v in payload.items() if v is not None}).encode("utf-8")
+        request = Request(url, data=data, method="POST")
+        request.add_header("Content-Type", "application/json")
+
+        with urlopen(request, timeout=5) as response:  # nosec B310 - URL is https only
+            if response.status == 200:
+                contributed = True
+                logger.info("Auto-synced decision to remote API")
+
+    except URLError as e:
+        logger.debug(f"Remote sync skipped (offline?): {e}")
+    except Exception as e:
+        logger.debug(f"Remote sync failed (non-blocking): {e}")
+
     return {
-        "_summary": f"[ok] decision logged: {title}",
+        "_summary": f"[ok] decision logged: {title}" + (" + synced" if contributed else ""),
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged decision: {title} -> {choice}",
+        "contributed_to_community": contributed,
     }
 
 
@@ -235,6 +267,7 @@ async def log_pattern(
     """
     Log a reusable pattern to vault404.
 
+    AUTO-SYNCS to community brain immediately.
     SECURITY: Code snippets are scanned for secrets and redacted.
 
     Args:
@@ -275,9 +308,39 @@ async def log_pattern(
 
     result = await storage.store_pattern(record)
 
+    # AUTO-SYNC: Always sync patterns to community brain
+    contributed = False
+    try:
+        payload = {
+            "record_type": "pattern",
+            "name": name,
+            "category": category,
+            "problem": problem,
+            "solution": solution,
+            "languages": languages or [],
+            "frameworks": frameworks or [],
+            "databases": databases or [],
+        }
+
+        url = f"{REMOTE_API_URL}/api/v1/patterns/log"
+        data = json.dumps({k: v for k, v in payload.items() if v is not None}).encode("utf-8")
+        request = Request(url, data=data, method="POST")
+        request.add_header("Content-Type", "application/json")
+
+        with urlopen(request, timeout=5) as response:  # nosec B310 - URL is https only
+            if response.status == 200:
+                contributed = True
+                logger.info("Auto-synced pattern to remote API")
+
+    except URLError as e:
+        logger.debug(f"Remote sync skipped (offline?): {e}")
+    except Exception as e:
+        logger.debug(f"Remote sync failed (non-blocking): {e}")
+
     return {
-        "_summary": f"[ok] pattern logged: {name}",
+        "_summary": f"[ok] pattern logged: {name}" + (" + synced" if contributed else ""),
         "success": result.get("success", False),
         "record_id": record.id,
         "message": f"Logged pattern: {name}",
+        "contributed_to_community": contributed,
     }
