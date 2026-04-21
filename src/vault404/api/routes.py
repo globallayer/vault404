@@ -31,13 +31,24 @@ from .models import (
     PatternResult,
     PatternLogRequest,
     PatternLogResponse,
+    # Vulnerability models
+    VulnerabilityReportRequest,
+    VulnerabilityReportResponse,
+    VulnerabilitySearchRequest,
+    VulnerabilitySearchResponse,
+    VulnerabilitySearchResult,
+    VulnerabilityFeedResponse,
+    VulnerabilityFeedItem,
+    VulnerabilityVerifyRequest,
+    VulnerabilityVerifyResponse,
+    VulnerabilityStatsResponse,
     # Stats & health models
     StatsResponse,
     HealthResponse,
 )
 from .auth import require_api_key, optional_api_key
-from ..storage import get_storage, Context, ErrorFix, Decision, Pattern, ErrorInfo, SolutionInfo
-from ..security import redact_secrets
+from ..storage import get_storage, Context, ErrorFix, Decision, Pattern, ErrorInfo, SolutionInfo, VulnerabilityReport
+from ..security import redact_secrets, full_vulnerability_redaction
 from ..sync.community import federated_search, CommunityBrain
 from ..sync.anonymizer import anonymize_record
 from ..sync.contribution import ContributionManager
@@ -60,6 +71,7 @@ AUTH_RATE_LIMIT = os.environ.get(
 solutions_router = APIRouter(prefix="/solutions", tags=["solutions"])
 decisions_router = APIRouter(prefix="/decisions", tags=["decisions"])
 patterns_router = APIRouter(prefix="/patterns", tags=["patterns"])
+vulns_router = APIRouter(prefix="/vulns", tags=["vulnerabilities"])
 stats_router = APIRouter(tags=["stats"])
 
 
@@ -494,6 +506,332 @@ async def log_pattern(
         id=record.id,
         success=result.get("success", False),
         message=f"Logged pattern: {request.name}",
+    )
+
+
+# =============================================================================
+# Vulnerability Routes
+# =============================================================================
+
+
+@vulns_router.post("/report", response_model=VulnerabilityReportResponse)
+async def report_vulnerability(
+    request: VulnerabilityReportRequest,
+    api_key: str = Depends(require_api_key),
+) -> VulnerabilityReportResponse:
+    """
+    Report an AI-discovered vulnerability.
+
+    **Requires API key authentication.**
+
+    Vulnerabilities follow responsible disclosure:
+    - 72-hour delay before unpatched vulns appear in public feed
+    - Patched/mitigated vulns are immediately public
+    - Pattern snippets are anonymized (no file paths, repo names, variable names)
+
+    Rate limit: 20/minute
+    """
+    storage = get_storage()
+
+    # Full anonymization - secrets + file paths + identifiers
+    safe_pattern = full_vulnerability_redaction(request.pattern_snippet)
+    safe_fix = full_vulnerability_redaction(request.fix_snippet) if request.fix_snippet else None
+    safe_description = full_vulnerability_redaction(request.description)
+    safe_remediation = full_vulnerability_redaction(request.remediation) if request.remediation else None
+
+    # Create vulnerability record
+    record = VulnerabilityReport(
+        vuln_type=request.vuln_type,
+        severity=request.severity,
+        cwe_id=request.cwe_id,
+        language=request.language,
+        framework=request.framework,
+        database=request.database,
+        platform=request.platform,
+        pattern_snippet=safe_pattern,
+        fix_snippet=safe_fix,
+        description=safe_description,
+        impact=request.impact,
+        remediation=safe_remediation,
+        disclosure_status="open",  # New vulns always start as open
+        disclosure_delay_hours=72,  # Default 72-hour responsible disclosure
+        reported_by_agent=request.reported_by_agent or "unknown",
+    )
+
+    # Store
+    result = await storage.store_vulnerability(record)
+
+    secrets_redacted = (
+        safe_pattern != request.pattern_snippet
+        or safe_description != request.description
+    )
+
+    return VulnerabilityReportResponse(
+        id=record.id,
+        success=result.get("success", False),
+        message=f"Reported {request.severity} {request.vuln_type} vulnerability",
+        disclosure_delay_hours=record.disclosure_delay_hours,
+        is_public=record.is_public,
+    )
+
+
+@vulns_router.get("/feed", response_model=VulnerabilityFeedResponse)
+async def get_vulnerability_feed(
+    limit: int = 20,
+    offset: int = 0,
+    severity: str = None,
+    vuln_type: str = None,
+    api_key: str = Depends(optional_api_key),
+) -> VulnerabilityFeedResponse:
+    """
+    Get the live vulnerability feed.
+
+    Returns publicly disclosable vulnerabilities (most recent first).
+    Respects 72-hour responsible disclosure delay for unpatched vulns.
+
+    Query parameters:
+    - limit: Max results (default 20, max 100)
+    - offset: Pagination offset
+    - severity: Filter by severity (Critical, High, Medium, Low)
+    - vuln_type: Filter by type (SQLi, XSS, SSRF, RCE, etc.)
+
+    Rate limit: 60/minute (unauthenticated), 120/minute (authenticated)
+    """
+    storage = get_storage()
+
+    # Clamp limit
+    limit = min(max(1, limit), 100)
+
+    # Get feed from storage (request one extra to check has_more)
+    feed = await storage.get_vulnerability_feed(
+        limit=limit + 1,
+        offset=offset,
+        severity=severity,
+        vuln_type=vuln_type,
+    )
+
+    # Check if there are more items
+    has_more = len(feed) > limit
+    feed = feed[:limit]
+
+    def time_ago(timestamp_str: str) -> str:
+        """Convert timestamp to human-readable time ago."""
+        try:
+            from datetime import datetime
+            ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+            now = datetime.now()
+            delta = now - ts
+            if delta.days > 0:
+                return f"{delta.days}d ago"
+            hours = delta.seconds // 3600
+            if hours > 0:
+                return f"{hours}h ago"
+            minutes = delta.seconds // 60
+            return f"{minutes}m ago" if minutes > 0 else "just now"
+        except Exception:
+            return "unknown"
+
+    items = [
+        VulnerabilityFeedItem(
+            id=v.get("id", ""),
+            vuln_type=v.get("vuln_type", ""),
+            severity=v.get("severity", ""),
+            language=v.get("language"),
+            framework=v.get("framework"),
+            description=v.get("description", ""),
+            pattern_snippet=v.get("pattern_snippet", ""),
+            fix_snippet=v.get("fix_snippet"),
+            disclosure_status=v.get("disclosure_status", "open"),
+            reported_by_agent=v.get("reported_by_agent", "unknown"),
+            verified_count=v.get("verified_count", 0),
+            timestamp=v.get("timestamp", ""),
+            time_ago=time_ago(v.get("timestamp", "")),
+        )
+        for v in feed
+    ]
+
+    return VulnerabilityFeedResponse(
+        total=len(items),
+        items=items,
+        has_more=has_more,
+    )
+
+
+@vulns_router.post("/search", response_model=VulnerabilitySearchResponse)
+async def search_vulnerabilities(
+    request: VulnerabilitySearchRequest,
+    api_key: str = Depends(optional_api_key),
+) -> VulnerabilitySearchResponse:
+    """
+    Search for similar vulnerabilities.
+
+    Uses semantic search to find vulnerabilities matching your query.
+    Useful for checking if a vulnerability pattern has been seen before.
+
+    Rate limit: 60/minute (unauthenticated), 120/minute (authenticated)
+    """
+    storage = get_storage()
+
+    results = await storage.find_vulnerabilities(
+        query=request.query,
+        vuln_type=request.vuln_type,
+        severity=request.severity,
+        language=request.language,
+        framework=request.framework,
+        include_private=False,  # Public API never shows private vulns
+        limit=request.limit or 10,
+    )
+
+    if not results:
+        return VulnerabilitySearchResponse(
+            found=False,
+            message="No matching vulnerabilities found. If you've found a new vulnerability, use the /report endpoint to log it.",
+            results=[],
+            total=0,
+        )
+
+    search_results = [
+        VulnerabilitySearchResult(
+            id=r.get("id", ""),
+            vuln_type=r.get("vuln_type", ""),
+            severity=r.get("severity", ""),
+            language=r.get("language"),
+            framework=r.get("framework"),
+            description=r.get("description", ""),
+            pattern_snippet=r.get("pattern_snippet", ""),
+            fix_snippet=r.get("fix_snippet"),
+            relevance=round(r.get("similarity", 0), 2),
+            verified_count=r.get("verified_count", 0),
+            source="local",
+        )
+        for r in results
+    ]
+
+    return VulnerabilitySearchResponse(
+        found=True,
+        message=f"Found {len(results)} matching vulnerability pattern(s)",
+        results=search_results,
+        total=len(search_results),
+    )
+
+
+@vulns_router.post("/verify", response_model=VulnerabilityVerifyResponse)
+async def verify_vulnerability(
+    request: VulnerabilityVerifyRequest,
+    api_key: str = Depends(require_api_key),
+) -> VulnerabilityVerifyResponse:
+    """
+    Verify a vulnerability report.
+
+    **Requires API key authentication.**
+
+    Use this to confirm a vulnerability is valid or mark it as a false positive.
+    If fix_confirmed=True, the vulnerability will be marked as patched.
+
+    Rate limit: 20/minute
+    """
+    storage = get_storage()
+
+    # Determine disclosure status based on fix_confirmed
+    disclosure_status = "patched" if request.fix_confirmed else None
+
+    result = await storage.verify_vulnerability(
+        record_id=request.id,
+        is_valid=request.is_valid,
+        disclosure_status=disclosure_status,
+    )
+
+    # Get updated counts from index
+    verified_count = 0
+    false_positive_count = 0
+    for entry in storage._index.get("vulnerabilities", []):
+        if entry["id"] == request.id:
+            verified_count = entry.get("verified_count", 0)
+            false_positive_count = entry.get("false_positive_count", 0)
+            break
+
+    fix_msg = " Fix confirmed - marked as patched." if request.fix_confirmed else ""
+
+    return VulnerabilityVerifyResponse(
+        success=result.get("success", False),
+        id=request.id,
+        verified_count=verified_count,
+        false_positive_count=false_positive_count,
+        message=f"Vulnerability {request.id} marked as {'valid' if request.is_valid else 'false positive'}.{fix_msg}",
+    )
+
+
+@vulns_router.get("/stats", response_model=VulnerabilityStatsResponse)
+async def get_vulnerability_stats(
+    api_key: str = Depends(optional_api_key),
+) -> VulnerabilityStatsResponse:
+    """
+    Get vulnerability statistics for the dashboard.
+
+    Returns counts by severity, disclosure status, and top vulnerability types.
+
+    Rate limit: 60/minute
+    """
+    storage = get_storage()
+    stats = await storage.get_stats()
+
+    vulns = storage._index.get("vulnerabilities", [])
+
+    # Count by type
+    type_counts = {}
+    for v in vulns:
+        vtype = v.get("vuln_type", "Other")
+        type_counts[vtype] = type_counts.get(vtype, 0) + 1
+
+    # Count by agent
+    agent_counts = {}
+    for v in vulns:
+        agent = v.get("reported_by_agent", "unknown")
+        agent_counts[agent] = agent_counts.get(agent, 0) + 1
+
+    # Get patched/open counts from status
+    status_counts = stats.get("vuln_by_status", {})
+    total_patched = status_counts.get("patched", 0) + status_counts.get("mitigated", 0)
+    total_open = status_counts.get("open", 0)
+
+    # Top types this week (sorted by count)
+    from datetime import datetime, timedelta
+    week_ago = datetime.now() - timedelta(days=7)
+    week_type_counts = {}
+    recent_activity = []
+
+    for v in vulns:
+        try:
+            ts = datetime.fromisoformat(v.get("timestamp", ""))
+            if ts >= week_ago:
+                vtype = v.get("vuln_type", "Other")
+                week_type_counts[vtype] = week_type_counts.get(vtype, 0) + 1
+                recent_activity.append({
+                    "id": v.get("id"),
+                    "type": vtype,
+                    "severity": v.get("severity"),
+                    "timestamp": v.get("timestamp"),
+                })
+        except (ValueError, TypeError):
+            pass
+
+    top_types_this_week = [
+        {"type": t, "count": c}
+        for t, c in sorted(week_type_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    ]
+
+    # Sort recent activity by timestamp descending
+    recent_activity = sorted(recent_activity, key=lambda x: x.get("timestamp", ""), reverse=True)[:10]
+
+    return VulnerabilityStatsResponse(
+        total_found=stats.get("vulnerabilities", 0),
+        total_patched=total_patched,
+        total_open=total_open,
+        by_severity=stats.get("vuln_by_severity", {}),
+        by_type=type_counts,
+        by_agent=agent_counts,
+        top_types_this_week=top_types_this_week,
+        recent_activity=recent_activity,
     )
 
 

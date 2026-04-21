@@ -2,7 +2,7 @@
 
 import os
 from typing import Optional
-from .schemas import ErrorFix, Decision, Pattern, Context, ErrorInfo, SolutionInfo
+from .schemas import ErrorFix, Decision, Pattern, Context, ErrorInfo, SolutionInfo, VulnerabilityReport
 from .local_storage import LocalStorage
 
 # Centralized singleton - ALL modules must use this
@@ -57,6 +57,7 @@ __all__ = [
     "ErrorFix",
     "Decision",
     "Pattern",
+    "VulnerabilityReport",
     "Context",
     "ErrorInfo",
     "SolutionInfo",

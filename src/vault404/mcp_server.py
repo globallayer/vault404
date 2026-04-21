@@ -20,6 +20,7 @@ from mcp.types import Tool, TextContent
 from .tools.recording import log_error_fix, log_decision, log_pattern
 from .tools.querying import find_solution, find_decision, find_pattern
 from .tools.maintenance import verify_solution, get_stats
+from .tools.vulnerability import report_vulnerability, find_similar_vuln, verify_vuln_fix
 
 # Configure logging to stderr (stdout is for MCP protocol)
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
@@ -39,6 +40,10 @@ VAULT404_TOOLS = [
     "mcp__vault404__find_pattern",
     "mcp__vault404__verify_solution",
     "mcp__vault404__agent_brain_stats",
+    # Vulnerability intelligence tools
+    "mcp__vault404__report_vulnerability",
+    "mcp__vault404__find_similar_vuln",
+    "mcp__vault404__verify_vuln_fix",
 ]
 
 
@@ -297,6 +302,145 @@ Shows total records, entities, and relationship types.""",
             "properties": {},
         },
     ),
+    # Vulnerability Intelligence Tools
+    Tool(
+        name="report_vulnerability",
+        description="""Report an AI-discovered security vulnerability to vault404.
+
+Use this when you find a security vulnerability while reviewing code.
+Patterns are automatically anonymized (no file paths, repo names, or secrets).
+
+RESPONSIBLE DISCLOSURE: New vulnerabilities have a 72-hour delay
+before appearing in the public feed, unless marked as patched.
+
+Required: vuln_type, severity, pattern_snippet, description
+Optional: cwe_id, language, framework, database, platform, fix_snippet, impact, remediation
+
+Vulnerability types: SQLi, XSS, SSRF, RCE, IDOR, PathTraversal, AuthBypass,
+                     BrokenAuth, CSRF, XXE, Deserialization, SSTI, OpenRedirect,
+                     InfoLeak, MissingAuth, Hardcoded, WeakCrypto, RaceCondition, DoS, Other
+
+Severity levels: Critical, High, Medium, Low""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "vuln_type": {
+                    "type": "string",
+                    "description": "Type of vulnerability (SQLi, XSS, SSRF, RCE, etc.)",
+                },
+                "severity": {
+                    "type": "string",
+                    "description": "Severity level (Critical, High, Medium, Low)",
+                },
+                "pattern_snippet": {
+                    "type": "string",
+                    "description": "Anonymized vulnerable code pattern (NO real paths/names)",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "What the vulnerability is",
+                },
+                "cwe_id": {
+                    "type": "string",
+                    "description": "CWE ID (e.g., CWE-79, CWE-89)",
+                },
+                "language": {"type": "string", "description": "Programming language"},
+                "framework": {"type": "string", "description": "Framework"},
+                "database": {"type": "string", "description": "Database"},
+                "platform": {"type": "string", "description": "Platform"},
+                "fix_snippet": {
+                    "type": "string",
+                    "description": "Anonymized fix pattern",
+                },
+                "impact": {
+                    "type": "string",
+                    "description": "Potential impact if exploited",
+                },
+                "remediation": {
+                    "type": "string",
+                    "description": "How to fix the vulnerability",
+                },
+                "reported_by_agent": {
+                    "type": "string",
+                    "description": "AI agent name (default: Claude)",
+                    "default": "Claude",
+                },
+            },
+            "required": ["vuln_type", "severity", "pattern_snippet", "description"],
+        },
+    ),
+    Tool(
+        name="find_similar_vuln",
+        description="""Search for similar vulnerabilities in vault404.
+
+ALWAYS check this before writing code that handles:
+- User input (risk: XSS, SQLi, command injection)
+- Database queries (risk: SQLi, NoSQLi)
+- File operations (risk: path traversal, LFI)
+- Authentication (risk: auth bypass, broken auth)
+- External API calls (risk: SSRF)
+
+Uses semantic search to find similar vulnerability patterns.
+
+Required: query
+Optional: vuln_type, severity, language, framework, limit""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query (vulnerability description or pattern)",
+                },
+                "vuln_type": {
+                    "type": "string",
+                    "description": "Filter by type (SQLi, XSS, etc.)",
+                },
+                "severity": {
+                    "type": "string",
+                    "description": "Filter by severity (Critical, High, Medium, Low)",
+                },
+                "language": {"type": "string", "description": "Filter by language"},
+                "framework": {"type": "string", "description": "Filter by framework"},
+                "limit": {"type": "integer", "default": 5},
+            },
+            "required": ["query"],
+        },
+    ),
+    Tool(
+        name="verify_vuln_fix",
+        description="""Verify a vulnerability report.
+
+Call this after:
+- Confirming a vulnerability is real (is_valid=True)
+- Determining it's a false positive (is_valid=False)
+- Confirming a fix works (fix_confirmed=True -> marks as patched)
+
+Required: vuln_id, is_valid
+Optional: fix_confirmed, notes""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "vuln_id": {
+                    "type": "string",
+                    "description": "The vulnerability ID to verify",
+                },
+                "is_valid": {
+                    "type": "boolean",
+                    "description": "True if vulnerability is confirmed real",
+                },
+                "fix_confirmed": {
+                    "type": "boolean",
+                    "description": "True if the fix has been verified to work",
+                    "default": False,
+                },
+                "notes": {
+                    "type": "string",
+                    "description": "Optional notes about the verification",
+                },
+            },
+            "required": ["vuln_id", "is_valid"],
+        },
+    ),
 ]
 
 
@@ -333,6 +477,13 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             result = await verify_solution(**arguments)
         elif name == "agent_brain_stats":
             result = await get_stats()
+        # Vulnerability tools
+        elif name == "report_vulnerability":
+            result = await report_vulnerability(**arguments)
+        elif name == "find_similar_vuln":
+            result = await find_similar_vuln(**arguments)
+        elif name == "verify_vuln_fix":
+            result = await verify_vuln_fix(**arguments)
         else:
             result = {"error": f"Unknown tool: {name}"}
 

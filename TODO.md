@@ -8,29 +8,45 @@
 
 ### Backend — Schema & API
 
-- [ ] Add `VulnerabilityReport` model to `models.py`
+- [x] Add `VulnerabilityReport` model to `schemas.py`
   - vuln_type, severity, language, framework
   - pattern_snippet, fix_snippet (redacted)
   - disclosure_status, reported_by_agent
   - verified_count, disclosure_delay (72h for unpatched)
 
-- [ ] Add new API endpoints to `routes.py`
-  - `POST /api/v1/vulns/report` — submit vulnerability
-  - `GET /api/v1/vulns/feed` — live feed
-  - `GET /api/v1/vulns/stats` — dashboard stats
-  - `GET /api/v1/vulns/search` — semantic search
-  - `POST /api/v1/vulns/:id/verify` — verify fix
+- [x] Add API request/response models to `api/models.py`
+  - VulnerabilityReportRequest, VulnerabilityReportResponse
+  - VulnerabilityFeedItem, VulnerabilityFeedResponse
+  - VulnerabilitySearchRequest, VulnerabilitySearchResponse
+  - VulnerabilityVerifyRequest, VulnerabilityStatsResponse
 
-- [ ] Extend `redactor.py` for vulnerability patterns
-  - Strip file paths, repo names, variable names
+- [x] Add vulnerability storage methods to `local_storage.py`
+  - store_vulnerability(), find_vulnerabilities()
+  - verify_vulnerability(), get_vulnerability_feed()
+  - Updated get_stats() with vuln counts by severity/status
+
+- [x] Add new API endpoints to `routes.py`
+  - `POST /api/v1/vulns/report` — submit vulnerability
+  - `GET /api/v1/vulns/feed` — live feed (respects 72h disclosure)
+  - `GET /api/v1/vulns/stats` — dashboard stats
+  - `POST /api/v1/vulns/search` — semantic search
+  - `POST /api/v1/vulns/verify` — verify fix
+
+- [x] Extend `redactor.py` for vulnerability patterns
+  - Strip file paths (Unix + Windows)
+  - Strip repo URLs (GitHub, GitLab, Bitbucket)
+  - Strip IP addresses (v4 + v6)
+  - Strip domain names and email addresses
+  - Strip commit hashes and UUIDs
   - Keep only vulnerability shape/pattern
 
 ### Backend — MCP Tools
 
-- [ ] Add `report_vulnerability` MCP tool
-- [ ] Add `find_similar_vuln` MCP tool
-- [ ] Add `verify_vuln_fix` MCP tool
-- [ ] Update tool descriptions for security focus
+- [x] Add `report_vulnerability` MCP tool
+- [x] Add `find_similar_vuln` MCP tool
+- [x] Add `verify_vuln_fix` MCP tool
+- [x] Update tool descriptions for security focus
+- [x] Auto-allow permissions for new tools
 
 ### Content Seeding
 

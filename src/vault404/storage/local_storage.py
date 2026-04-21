@@ -21,7 +21,7 @@ from typing import Optional
 from difflib import SequenceMatcher
 import tempfile
 
-from .schemas import ErrorFix, Decision, Pattern, Context
+from .schemas import ErrorFix, Decision, Pattern, Context, VulnerabilityReport
 from ..security.encryption import get_encryptor, CRYPTO_AVAILABLE
 from ..search.ranker import temporal_decay, calculate_score
 from ..search.strategies import multi_strategy_text_score
@@ -62,12 +62,13 @@ class LocalStorage:
         self.errors_dir = self.data_dir / "errors"
         self.decisions_dir = self.data_dir / "decisions"
         self.patterns_dir = self.data_dir / "patterns"
+        self.vulns_dir = self.data_dir / "vulnerabilities"
         self.backups_dir = self.data_dir / "backups"
         self.index_path = self.data_dir / "index.json"
         self.config_path = self.data_dir / "config.json"
 
         # Create directories
-        for d in [self.errors_dir, self.decisions_dir, self.patterns_dir, self.backups_dir]:
+        for d in [self.errors_dir, self.decisions_dir, self.patterns_dir, self.vulns_dir, self.backups_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
         # Set restrictive permissions (Unix only)
@@ -209,7 +210,7 @@ class LocalStorage:
 
         CRITICAL: Never return empty index if files exist on disk.
         """
-        index = {"errors": [], "decisions": [], "patterns": []}
+        index = {"errors": [], "decisions": [], "patterns": [], "vulnerabilities": []}
 
         # Try to load existing index
         if self.index_path.exists():
@@ -237,12 +238,14 @@ class LocalStorage:
         error_files = list(self.errors_dir.glob("*.json"))
         decision_files = list(self.decisions_dir.glob("*.json"))
         pattern_files = list(self.patterns_dir.glob("*.json"))
+        vuln_files = list(self.vulns_dir.glob("*.json"))
 
-        files_on_disk = len(error_files) + len(decision_files) + len(pattern_files)
+        files_on_disk = len(error_files) + len(decision_files) + len(pattern_files) + len(vuln_files)
         entries_in_index = (
             len(index.get("errors", []))
             + len(index.get("decisions", []))
             + len(index.get("patterns", []))
+            + len(index.get("vulnerabilities", []))
         )
 
         # If index is missing entries, rebuild from files
@@ -254,7 +257,7 @@ class LocalStorage:
 
     def _rebuild_index_from_files(self) -> dict:
         """Rebuild entire index from individual record files."""
-        index = {"errors": [], "decisions": [], "patterns": []}
+        index = {"errors": [], "decisions": [], "patterns": [], "vulnerabilities": []}
 
         # Rebuild errors
         for filepath in self.errors_dir.glob("*.json"):
@@ -309,6 +312,33 @@ class LocalStorage:
                         "category": data.get("category", ""),
                         "problem": data.get("problem", "")[:200],
                         "solution": data.get("solution", "")[:200],
+                        "timestamp": data.get("timestamp", datetime.now().isoformat()),
+                        "embedding": data.get("embedding"),
+                    }
+                )
+            except (json.JSONDecodeError, IOError, ValueError):
+                continue
+
+        # Rebuild vulnerabilities
+        for filepath in self.vulns_dir.glob("*.json"):
+            try:
+                content = self._read_file(filepath)
+                data = json.loads(content)
+                index["vulnerabilities"].append(
+                    {
+                        "id": data.get("id", filepath.stem),
+                        "vuln_type": data.get("vuln_type", ""),
+                        "severity": data.get("severity", ""),
+                        "cwe_id": data.get("cwe_id"),
+                        "language": data.get("language"),
+                        "framework": data.get("framework"),
+                        "description": data.get("description", "")[:200],
+                        "pattern_snippet": data.get("pattern_snippet", "")[:200],
+                        "disclosure_status": data.get("disclosure_status", "open"),
+                        "is_public": data.get("is_public", False),
+                        "reported_by_agent": data.get("reported_by_agent", "unknown"),
+                        "verified_count": data.get("verified_count", 0),
+                        "false_positive_count": data.get("false_positive_count", 0),
                         "timestamp": data.get("timestamp", datetime.now().isoformat()),
                         "embedding": data.get("embedding"),
                     }
@@ -433,6 +463,26 @@ class LocalStorage:
                 entry["failure_count"] = 0
                 migrated = True
 
+        # Ensure vulnerabilities list exists
+        if "vulnerabilities" not in index:
+            index["vulnerabilities"] = []
+            migrated = True
+
+        # Migrate vulnerability entries
+        for entry in index.get("vulnerabilities", []):
+            if "verified_count" not in entry:
+                entry["verified_count"] = 0
+                migrated = True
+            if "false_positive_count" not in entry:
+                entry["false_positive_count"] = 0
+                migrated = True
+            if "is_public" not in entry:
+                entry["is_public"] = False
+                migrated = True
+            if "disclosure_status" not in entry:
+                entry["disclosure_status"] = "open"
+                migrated = True
+
         if migrated:
             self._save_index_internal(index)
 
@@ -455,11 +505,13 @@ class LocalStorage:
             len(list(self.errors_dir.glob("*.json")))
             + len(list(self.decisions_dir.glob("*.json")))
             + len(list(self.patterns_dir.glob("*.json")))
+            + len(list(self.vulns_dir.glob("*.json")))
         )
         entries_in_index = (
             len(self._index.get("errors", []))
             + len(self._index.get("decisions", []))
             + len(self._index.get("patterns", []))
+            + len(self._index.get("vulnerabilities", []))
         )
 
         if files_on_disk > 0 and entries_in_index == 0:
@@ -780,6 +832,275 @@ class LocalStorage:
         return results[:limit]
 
     # =========================================================================
+    # Vulnerability Storage
+    # =========================================================================
+
+    async def store_vulnerability(self, record: VulnerabilityReport) -> dict:
+        """Store a vulnerability report."""
+        filepath = self.vulns_dir / f"{record.id}.json"
+
+        # Compute embedding for semantic search
+        embedding_text = f"{record.vuln_type} | {record.severity} | {record.description} | {record.pattern_snippet}"
+        embedding_vector = embeddings.get_embedding(embedding_text)
+
+        if embedding_vector:
+            record.embedding = embedding_vector
+
+        # Serialize to JSON
+        data = record.model_dump(mode="json")
+        data["timestamp"] = record.timestamp.isoformat()
+
+        content = json.dumps(data, indent=2, ensure_ascii=False)
+        self._write_file(filepath, content)
+
+        # Update index
+        self._index.setdefault("vulnerabilities", []).append(
+            {
+                "id": record.id,
+                "vuln_type": record.vuln_type,
+                "severity": record.severity,
+                "cwe_id": record.cwe_id,
+                "language": record.language,
+                "framework": record.framework,
+                "description": record.description[:200],
+                "pattern_snippet": record.pattern_snippet[:200],
+                "disclosure_status": record.disclosure_status,
+                "is_public": record.is_public,
+                "reported_by_agent": record.reported_by_agent,
+                "verified_count": record.verified_count,
+                "false_positive_count": record.false_positive_count,
+                "timestamp": record.timestamp.isoformat(),
+                "embedding": embedding_vector,
+            }
+        )
+        self._save_index()
+
+        return {
+            "success": True,
+            "record_id": record.id,
+            "filepath": str(filepath),
+            "has_embedding": embedding_vector is not None,
+        }
+
+    async def find_vulnerabilities(
+        self,
+        query: str,
+        vuln_type: Optional[str] = None,
+        severity: Optional[str] = None,
+        language: Optional[str] = None,
+        framework: Optional[str] = None,
+        include_private: bool = False,
+        limit: int = 10,
+    ) -> list[dict]:
+        """
+        Find vulnerabilities using hybrid semantic + text matching.
+
+        Args:
+            query: Search query (description, pattern, etc.)
+            vuln_type: Filter by vulnerability type (SQLi, XSS, etc.)
+            severity: Filter by severity (Critical, High, Medium, Low)
+            language: Filter by programming language
+            framework: Filter by framework
+            include_private: Include non-public vulnerabilities (default False)
+            limit: Maximum results to return
+        """
+        results = []
+        now = datetime.now()
+
+        # Compute query embedding for semantic search
+        query_embedding = embeddings.get_embedding(query)
+        semantic_available = query_embedding is not None
+
+        for entry in self._index.get("vulnerabilities", []):
+            # Filter by disclosure status (respect responsible disclosure)
+            if not include_private and not entry.get("is_public", False):
+                # Check if disclosure delay has passed
+                try:
+                    timestamp = datetime.fromisoformat(entry["timestamp"])
+                    disclosure_hours = 72  # Default 72-hour delay
+                    from datetime import timedelta
+                    deadline = timestamp + timedelta(hours=disclosure_hours)
+                    if now < deadline and entry.get("disclosure_status") == "open":
+                        continue  # Skip - not ready for disclosure
+                except (ValueError, KeyError):
+                    continue
+
+            # Apply filters
+            if vuln_type and entry.get("vuln_type", "").lower() != vuln_type.lower():
+                continue
+            if severity and entry.get("severity", "").lower() != severity.lower():
+                continue
+            if language and entry.get("language", "").lower() != language.lower():
+                continue
+            if framework and entry.get("framework", "").lower() != framework.lower():
+                continue
+
+            # Semantic similarity
+            semantic_sim = 0.0
+            if semantic_available and entry.get("embedding"):
+                semantic_sim = embeddings.cosine_similarity(query_embedding, entry["embedding"])
+
+            # Text similarity
+            desc_sim = self._text_similarity(query.lower(), entry.get("description", "").lower())
+            pattern_sim = self._text_similarity(query.lower(), entry.get("pattern_snippet", "").lower())
+            text_sim = max(desc_sim, pattern_sim)
+
+            # Hybrid similarity
+            if semantic_available and entry.get("embedding"):
+                similarity = 0.7 * semantic_sim + 0.3 * text_sim
+            else:
+                similarity = text_sim
+
+            # Boost by verification count
+            verification_boost = min(entry.get("verified_count", 0) * 0.05, 0.2)
+            similarity += verification_boost
+
+            # Penalize false positives
+            fp_penalty = min(entry.get("false_positive_count", 0) * 0.1, 0.3)
+            similarity -= fp_penalty
+
+            if similarity > 0.1:
+                results.append(
+                    {
+                        "id": entry["id"],
+                        "vuln_type": entry["vuln_type"],
+                        "severity": entry["severity"],
+                        "cwe_id": entry.get("cwe_id"),
+                        "language": entry.get("language"),
+                        "framework": entry.get("framework"),
+                        "description": entry["description"],
+                        "pattern_snippet": entry["pattern_snippet"],
+                        "disclosure_status": entry.get("disclosure_status"),
+                        "reported_by_agent": entry.get("reported_by_agent"),
+                        "verified_count": entry.get("verified_count", 0),
+                        "similarity": max(0, min(similarity, 1.0)),
+                        "timestamp": entry.get("timestamp"),
+                    }
+                )
+
+        results.sort(key=lambda x: x["similarity"], reverse=True)
+        top_results = results[:limit]
+
+        # Track usage
+        self._track_vuln_usage([r["id"] for r in top_results])
+
+        return top_results
+
+    def _track_vuln_usage(self, record_ids: list[str]) -> None:
+        """Update usage stats for vulnerability records."""
+        if not record_ids:
+            return
+
+        now = datetime.now().isoformat()
+        updated = False
+
+        for entry in self._index.get("vulnerabilities", []):
+            if entry["id"] in record_ids:
+                entry["view_count"] = entry.get("view_count", 0) + 1
+                entry["last_accessed"] = now
+                updated = True
+
+        if updated:
+            self._save_index()
+
+    async def verify_vulnerability(
+        self,
+        record_id: str,
+        is_valid: bool,
+        disclosure_status: Optional[str] = None,
+    ) -> dict:
+        """
+        Verify a vulnerability report.
+
+        Args:
+            record_id: The vulnerability ID
+            is_valid: True if vulnerability is confirmed, False if false positive
+            disclosure_status: Update status (open, patched, mitigated, wontfix)
+        """
+        for entry in self._index.get("vulnerabilities", []):
+            if entry["id"] == record_id:
+                if is_valid:
+                    entry["verified_count"] = entry.get("verified_count", 0) + 1
+                else:
+                    entry["false_positive_count"] = entry.get("false_positive_count", 0) + 1
+
+                if disclosure_status:
+                    entry["disclosure_status"] = disclosure_status
+                    # Mark as public if patched/mitigated/wontfix
+                    if disclosure_status in ("patched", "mitigated", "wontfix"):
+                        entry["is_public"] = True
+
+                entry["verification_date"] = datetime.now().isoformat()
+                break
+
+        self._save_index()
+
+        # Update the file as well
+        filepath = self.vulns_dir / f"{record_id}.json"
+        if filepath.exists():
+            content = self._read_file(filepath)
+            data = json.loads(content)
+            if is_valid:
+                data["verified_count"] = data.get("verified_count", 0) + 1
+            else:
+                data["false_positive_count"] = data.get("false_positive_count", 0) + 1
+            if disclosure_status:
+                data["disclosure_status"] = disclosure_status
+                if disclosure_status in ("patched", "mitigated", "wontfix"):
+                    data["is_public"] = True
+            self._write_file(filepath, json.dumps(data, indent=2))
+
+        return {
+            "success": True,
+            "record_id": record_id,
+            "is_valid": is_valid,
+            "disclosure_status": disclosure_status,
+        }
+
+    async def get_vulnerability_feed(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        severity: Optional[str] = None,
+        vuln_type: Optional[str] = None,
+    ) -> list[dict]:
+        """
+        Get live vulnerability feed (most recent first).
+
+        Only returns publicly disclosable vulnerabilities.
+        """
+        now = datetime.now()
+        from datetime import timedelta
+
+        feed = []
+        for entry in self._index.get("vulnerabilities", []):
+            # Check if ready for public disclosure
+            is_public = entry.get("is_public", False)
+            disclosure_status = entry.get("disclosure_status", "open")
+
+            if not is_public and disclosure_status == "open":
+                try:
+                    timestamp = datetime.fromisoformat(entry["timestamp"])
+                    deadline = timestamp + timedelta(hours=72)
+                    if now < deadline:
+                        continue  # Not ready for disclosure
+                except (ValueError, KeyError):
+                    continue
+
+            # Apply filters
+            if severity and entry.get("severity", "").lower() != severity.lower():
+                continue
+            if vuln_type and entry.get("vuln_type", "").lower() != vuln_type.lower():
+                continue
+
+            feed.append(entry)
+
+        # Sort by timestamp (most recent first)
+        feed.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
+        return feed[offset : offset + limit]
+
+    # =========================================================================
     # Maintenance
     # =========================================================================
 
@@ -808,15 +1129,35 @@ class LocalStorage:
 
     async def get_stats(self) -> dict:
         """Get statistics about the knowledge base."""
+        vulns = self._index.get("vulnerabilities", [])
+
+        # Count vulnerabilities by severity
+        severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
+        for v in vulns:
+            sev = v.get("severity", "")
+            if sev in severity_counts:
+                severity_counts[sev] += 1
+
+        # Count by disclosure status
+        status_counts = {"open": 0, "patched": 0, "mitigated": 0, "wontfix": 0}
+        for v in vulns:
+            status = v.get("disclosure_status", "open")
+            if status in status_counts:
+                status_counts[status] += 1
+
         return {
             "total_records": (
                 len(self._index.get("errors", []))
                 + len(self._index.get("decisions", []))
                 + len(self._index.get("patterns", []))
+                + len(vulns)
             ),
             "errors": len(self._index.get("errors", [])),
             "decisions": len(self._index.get("decisions", [])),
             "patterns": len(self._index.get("patterns", [])),
+            "vulnerabilities": len(vulns),
+            "vuln_by_severity": severity_counts,
+            "vuln_by_status": status_counts,
             "data_dir": str(self.data_dir),
             "backups": len(list(self.backups_dir.glob("index_*.json"))),
         }
@@ -847,10 +1188,19 @@ class LocalStorage:
             except (json.JSONDecodeError, IOError, ValueError):
                 pass
 
+        vulnerabilities = []
+        for filepath in self.vulns_dir.glob("*.json"):
+            try:
+                content = self._read_file(filepath)
+                vulnerabilities.append(json.loads(content))
+            except (json.JSONDecodeError, IOError, ValueError):
+                pass
+
         return {
             "errors": errors,
             "decisions": decisions,
             "patterns": patterns,
+            "vulnerabilities": vulnerabilities,
         }
 
     # =========================================================================

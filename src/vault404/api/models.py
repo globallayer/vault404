@@ -401,3 +401,240 @@ class RateLimitResponse(BaseModel):
 
     detail: str = "Rate limit exceeded"
     retry_after: Optional[int] = None
+
+
+# =============================================================================
+# Vulnerability Models
+# =============================================================================
+
+# Valid vulnerability types
+VULN_TYPES = [
+    "SQLi",           # SQL Injection
+    "XSS",            # Cross-Site Scripting
+    "SSRF",           # Server-Side Request Forgery
+    "RCE",            # Remote Code Execution
+    "IDOR",           # Insecure Direct Object Reference
+    "PathTraversal",  # Path/Directory Traversal
+    "AuthBypass",     # Authentication Bypass
+    "BrokenAuth",     # Broken Authentication
+    "CSRF",           # Cross-Site Request Forgery
+    "XXE",            # XML External Entity
+    "Deserialization", # Insecure Deserialization
+    "SSTI",           # Server-Side Template Injection
+    "OpenRedirect",   # Open Redirect
+    "InfoLeak",       # Information Disclosure
+    "MissingAuth",    # Missing Authorization
+    "Hardcoded",      # Hardcoded Secrets/Credentials
+    "WeakCrypto",     # Weak Cryptography
+    "RaceCondition",  # Race Condition
+    "DoS",            # Denial of Service
+    "Other",          # Other vulnerability type
+]
+
+SEVERITY_LEVELS = ["Critical", "High", "Medium", "Low"]
+DISCLOSURE_STATUSES = ["open", "patched", "mitigated", "wontfix"]
+AGENT_TYPES = ["Claude", "GPT", "Cursor", "Aider", "Copilot", "Continue", "Other"]
+
+
+class VulnerabilityReportRequest(BaseModel):
+    """Request body for reporting a vulnerability."""
+
+    vuln_type: str = Field(
+        ...,
+        description="Type of vulnerability (SQLi, XSS, SSRF, RCE, etc.)",
+    )
+    severity: str = Field(
+        ...,
+        description="Severity level (Critical, High, Medium, Low)",
+    )
+    pattern_snippet: str = Field(
+        ...,
+        min_length=MIN_TEXT_LENGTH,
+        max_length=MAX_CODE_LENGTH,
+        description="Anonymized vulnerable code pattern (NO real code/paths)",
+    )
+    description: str = Field(
+        ...,
+        min_length=MIN_TEXT_LENGTH,
+        max_length=MAX_SOLUTION_LENGTH,
+        description="Description of the vulnerability",
+    )
+
+    # Optional fields
+    cwe_id: Optional[str] = Field(None, max_length=20, description="CWE ID (e.g., CWE-79)")
+    language: Optional[str] = Field(None, max_length=50, description="Programming language")
+    framework: Optional[str] = Field(None, max_length=50, description="Framework")
+    database: Optional[str] = Field(None, max_length=50, description="Database")
+    platform: Optional[str] = Field(None, max_length=50, description="Platform")
+    fix_snippet: Optional[str] = Field(
+        None, max_length=MAX_CODE_LENGTH, description="Anonymized fix pattern"
+    )
+    impact: Optional[str] = Field(
+        None, max_length=MAX_SHORT_TEXT_LENGTH, description="Potential impact"
+    )
+    remediation: Optional[str] = Field(
+        None, max_length=MAX_SOLUTION_LENGTH, description="How to fix"
+    )
+    reported_by_agent: str = Field(
+        "Claude", max_length=50, description="AI agent that found it"
+    )
+
+    @field_validator("vuln_type")
+    @classmethod
+    def validate_vuln_type(cls, v):
+        if v not in VULN_TYPES:
+            raise ValueError(f"vuln_type must be one of: {', '.join(VULN_TYPES)}")
+        return v
+
+    @field_validator("severity")
+    @classmethod
+    def validate_severity(cls, v):
+        if v not in SEVERITY_LEVELS:
+            raise ValueError(f"severity must be one of: {', '.join(SEVERITY_LEVELS)}")
+        return v
+
+    @field_validator("cwe_id")
+    @classmethod
+    def validate_cwe_id(cls, v):
+        if v is not None:
+            if not re.match(r"^CWE-\d+$", v):
+                raise ValueError("cwe_id must be in format CWE-XXX (e.g., CWE-79)")
+        return v
+
+
+class VulnerabilityReportResponse(BaseModel):
+    """Response for reporting a vulnerability."""
+
+    id: str
+    success: bool
+    message: str
+    disclosure_delay_hours: int = 72
+    is_public: bool = False
+
+
+class VulnerabilityFeedItem(BaseModel):
+    """A single vulnerability in the feed."""
+
+    id: str
+    vuln_type: str
+    severity: str
+    language: Optional[str] = None
+    framework: Optional[str] = None
+    description: str
+    pattern_snippet: str
+    fix_snippet: Optional[str] = None
+    disclosure_status: str
+    reported_by_agent: str
+    verified_count: int
+    timestamp: str
+    time_ago: str  # "2h ago", "1d ago", etc.
+
+
+class VulnerabilityFeedResponse(BaseModel):
+    """Response for vulnerability feed."""
+
+    total: int
+    items: List[VulnerabilityFeedItem] = Field(default_factory=list)
+    has_more: bool = False
+
+
+class VulnerabilitySearchRequest(BaseModel):
+    """Request body for searching vulnerabilities."""
+
+    query: str = Field(
+        ...,
+        min_length=MIN_TEXT_LENGTH,
+        max_length=MAX_ERROR_MESSAGE_LENGTH,
+        description="Search query (vulnerability pattern or description)",
+    )
+    vuln_type: Optional[str] = Field(None, description="Filter by vulnerability type")
+    severity: Optional[str] = Field(None, description="Filter by severity")
+    language: Optional[str] = Field(None, max_length=50, description="Filter by language")
+    framework: Optional[str] = Field(None, max_length=50, description="Filter by framework")
+    disclosure_status: Optional[str] = Field(None, description="Filter by status")
+    limit: int = Field(10, ge=1, le=100, description="Maximum results")
+
+    @field_validator("vuln_type")
+    @classmethod
+    def validate_vuln_type(cls, v):
+        if v is not None and v not in VULN_TYPES:
+            raise ValueError(f"vuln_type must be one of: {', '.join(VULN_TYPES)}")
+        return v
+
+    @field_validator("severity")
+    @classmethod
+    def validate_severity(cls, v):
+        if v is not None and v not in SEVERITY_LEVELS:
+            raise ValueError(f"severity must be one of: {', '.join(SEVERITY_LEVELS)}")
+        return v
+
+    @field_validator("disclosure_status")
+    @classmethod
+    def validate_status(cls, v):
+        if v is not None and v not in DISCLOSURE_STATUSES:
+            raise ValueError(f"disclosure_status must be one of: {', '.join(DISCLOSURE_STATUSES)}")
+        return v
+
+
+class VulnerabilitySearchResult(BaseModel):
+    """A single vulnerability search result."""
+
+    id: str
+    vuln_type: str
+    severity: str
+    description: str
+    pattern_snippet: str
+    fix_snippet: Optional[str] = None
+    language: Optional[str] = None
+    framework: Optional[str] = None
+    verified_count: int
+    relevance: float
+    source: str = "local"
+
+
+class VulnerabilitySearchResponse(BaseModel):
+    """Response for vulnerability search."""
+
+    found: bool
+    message: str
+    results: List[VulnerabilitySearchResult] = Field(default_factory=list)
+    total: int = 0
+
+
+class VulnerabilityVerifyRequest(BaseModel):
+    """Request body for verifying a vulnerability."""
+
+    id: str = Field(..., min_length=1, max_length=100, description="Vulnerability ID")
+    is_valid: bool = Field(..., description="True if vuln is real, False if false positive")
+    fix_confirmed: bool = Field(False, description="True if the fix works")
+    notes: Optional[str] = Field(None, max_length=MAX_SHORT_TEXT_LENGTH, description="Notes")
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, v):
+        if not re.match(r"^vuln_[a-zA-Z0-9_\-]+$", v):
+            raise ValueError("Invalid vulnerability ID format")
+        return v
+
+
+class VulnerabilityVerifyResponse(BaseModel):
+    """Response for verifying a vulnerability."""
+
+    success: bool
+    id: str
+    verified_count: int
+    false_positive_count: int
+    message: str
+
+
+class VulnerabilityStatsResponse(BaseModel):
+    """Response for vulnerability statistics."""
+
+    total_found: int
+    total_patched: int
+    total_open: int
+    by_severity: Dict[str, int] = Field(default_factory=dict)
+    by_type: Dict[str, int] = Field(default_factory=dict)
+    by_agent: Dict[str, int] = Field(default_factory=dict)
+    top_types_this_week: List[Dict[str, Any]] = Field(default_factory=list)
+    recent_activity: List[Dict[str, Any]] = Field(default_factory=list)

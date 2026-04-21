@@ -17,6 +17,7 @@ from .routes import (
     solutions_router,
     decisions_router,
     patterns_router,
+    vulns_router,
     stats_router,
     API_VERSION,
 )
@@ -94,6 +95,10 @@ def create_app(
                 "description": "Search and log reusable patterns. Log requires API key.",
             },
             {
+                "name": "vulnerabilities",
+                "description": "AI-discovered vulnerability intelligence. Report/verify require API key. Feed/search are public with responsible disclosure (72h delay for unpatched).",
+            },
+            {
                 "name": "stats",
                 "description": "Statistics and health checks (public)",
             },
@@ -151,6 +156,7 @@ def create_app(
     app.include_router(solutions_router, prefix="/api/v1")
     app.include_router(decisions_router, prefix="/api/v1")
     app.include_router(patterns_router, prefix="/api/v1")
+    app.include_router(vulns_router, prefix="/api/v1")
     app.include_router(stats_router, prefix="/api/v1")
 
     # Root endpoint

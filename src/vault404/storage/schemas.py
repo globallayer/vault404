@@ -195,3 +195,79 @@ class Pattern(BaseModel):
             f"LANGS:{','.join(self.languages)}|"
             f"FW:{','.join(self.frameworks)}"
         )
+
+
+class VulnerabilityReport(BaseModel):
+    """A record of an AI-discovered security vulnerability"""
+
+    id: str = Field(default_factory=lambda: f"vuln_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    type: str = "vulnerability"
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+    # Vulnerability classification
+    vuln_type: str  # SQLi, XSS, SSRF, RCE, IDOR, PathTraversal, AuthBypass, etc.
+    severity: str  # Critical, High, Medium, Low
+    cwe_id: Optional[str] = None  # CWE-79, CWE-89, etc.
+
+    # Context
+    language: Optional[str] = None  # python, typescript, go, rust, etc.
+    framework: Optional[str] = None  # express, fastapi, django, nextjs, etc.
+    database: Optional[str] = None  # postgresql, mongodb, etc.
+    platform: Optional[str] = None  # railway, vercel, aws, etc.
+
+    # Vulnerability details (REDACTED - no real code/paths)
+    pattern_snippet: str  # Anonymized vulnerable code pattern
+    fix_snippet: Optional[str] = None  # Anonymized fix pattern
+    description: str  # What the vulnerability is
+    impact: Optional[str] = None  # Potential impact if exploited
+    remediation: Optional[str] = None  # How to fix it
+
+    # Disclosure & status
+    disclosure_status: str = "open"  # open, patched, mitigated, wontfix
+    disclosure_delay_hours: int = 72  # Responsible disclosure delay
+    is_public: bool = False  # Only true after disclosure delay or patched
+
+    # Attribution & verification
+    reported_by_agent: str = "unknown"  # Claude, GPT, Cursor, Aider, etc.
+    verified_count: int = 0
+    false_positive_count: int = 0
+
+    # Usage tracking
+    view_count: int = 0
+    last_accessed: Optional[datetime] = None
+
+    # Semantic search embedding (optional)
+    embedding: Optional[list[float]] = None
+
+    def to_aaak(self) -> str:
+        """Convert to AAAK compressed format"""
+        return (
+            f"VULN|{self.timestamp.strftime('%Y-%m-%d')}|"
+            f"TYPE:{self.vuln_type}|"
+            f"SEV:{self.severity}|"
+            f"LANG:{self.language or 'any'}|"
+            f"FW:{self.framework or 'any'}|"
+            f"STATUS:{self.disclosure_status}|"
+            f"AGENT:{self.reported_by_agent}|"
+            f"VERIFIED:{self.verified_count}"
+        )
+
+    @property
+    def is_ready_for_disclosure(self) -> bool:
+        """Check if vulnerability can be publicly disclosed"""
+        if self.disclosure_status in ("patched", "mitigated", "wontfix"):
+            return True
+        if self.is_public:
+            return True
+        # Check if disclosure delay has passed
+        from datetime import timedelta
+        deadline = self.timestamp + timedelta(hours=self.disclosure_delay_hours)
+        return datetime.now() >= deadline
+
+    @property
+    def confidence_score(self) -> float:
+        """Calculate confidence based on verifications vs false positives"""
+        total = self.verified_count + self.false_positive_count
+        if total == 0:
+            return 0.5  # Unknown
+        return self.verified_count / total
