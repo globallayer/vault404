@@ -50,12 +50,17 @@
 
 ### Content Seeding
 
-- [ ] Scan 3 public repos with Claude Code for vulns
-  - Express.js boilerplate
-  - FastAPI starter
-  - React template
+- [x] Seed vulnerability database with 104 vulnerability patterns
+  - 14 SQLi patterns (Python, JS, Go, Rust, PHP, Ruby, C#, Kotlin)
+  - 12 InfoLeak patterns (logging, API exposure, debug info)
+  - 8 XSS patterns (DOM, React, Vue, Jinja)
+  - 7 PathTraversal patterns (file access, uploads)
+  - 7 Hardcoded secrets (API keys, DB creds, private keys)
+  - 6 AuthBypass patterns (JWT, OAuth, cookies)
+  - 5 each: CSRF, BrokenAuth, MissingAuth, RCE, DoS
+  - Plus: IDOR, WeakCrypto, SSRF, Deserialization, XXE, SSTI, etc.
 
-- [ ] Log findings as VulnerabilityReport entries
+- [x] Log findings as VulnerabilityReport entries (104 total)
 - [ ] Open GitHub issues on affected repos (with vault404 credit)
 
 ### Frontend — vault404.dev
