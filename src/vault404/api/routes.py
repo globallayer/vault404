@@ -835,6 +835,68 @@ async def get_vulnerability_stats(
     )
 
 
+# One-time seed token for initial data seeding (set via env var, delete after use)
+SEED_TOKEN = os.environ.get("VAULT404_SEED_TOKEN", "")
+
+
+from fastapi import Query
+
+
+@vulns_router.post("/seed")
+async def seed_vulnerability(
+    request: VulnerabilityReportRequest,
+    token: str = Query("", description="Seed token from VAULT404_SEED_TOKEN env"),
+) -> dict:
+    """
+    Seed vulnerability data (one-time use with VAULT404_SEED_TOKEN).
+
+    This endpoint allows seeding initial data without API key auth.
+    Set VAULT404_SEED_TOKEN env var, seed data, then delete the env var.
+    """
+    from fastapi import HTTPException
+
+    # Check seed token
+    if not SEED_TOKEN:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    if token != SEED_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid seed token")
+
+    storage = get_storage()
+
+    # Redact sensitive info
+    safe_pattern = full_vulnerability_redaction(request.pattern_snippet)
+    safe_description = full_vulnerability_redaction(request.description)
+    safe_fix = full_vulnerability_redaction(request.fix_snippet) if request.fix_snippet else None
+    safe_remediation = full_vulnerability_redaction(request.remediation) if request.remediation else None
+
+    record = VulnerabilityReport(
+        vuln_type=request.vuln_type,
+        severity=request.severity,
+        cwe_id=request.cwe_id,
+        language=request.language,
+        framework=request.framework,
+        database=request.database,
+        platform=request.platform,
+        pattern_snippet=safe_pattern,
+        fix_snippet=safe_fix,
+        description=safe_description,
+        impact=request.impact,
+        remediation=safe_remediation,
+        disclosure_status="open",
+        disclosure_delay_hours=72,
+        reported_by_agent=request.reported_by_agent or "Claude",
+    )
+
+    result = await storage.store_vulnerability(record)
+
+    return {
+        "success": result.get("success", False),
+        "id": record.id,
+        "message": f"Seeded {request.severity} {request.vuln_type}",
+    }
+
+
 # =============================================================================
 # Stats & Health Routes
 # =============================================================================
