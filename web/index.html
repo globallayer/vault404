@@ -646,46 +646,86 @@ function Connector({ label, color }) {
 // ============================================================================
 // DOCS PAGE
 // ============================================================================
-function Docs({ setPage }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 220px', flex: 1, overflow: 'hidden' }}>
-      {/* Left sidebar */}
-      <div style={{ borderRight: `1px solid ${V.line}`, overflow: 'auto', padding: '20px 16px' }} className="v-scroll">
-        <DocNav title="Getting started" items={[['Introduction'], ['Quick start', true], ['Installation'], ['First query'], ['Redaction policy']]}/>
-        <DocNav title="Concepts" items={[['Findings'], ['Patterns vs code'], ['Verification'], ['Rank signals'], ['Collective brain']]}/>
-        <DocNav title="Integrations" items={[['Claude Code (MCP)'], ['Cursor'], ['Aider'], ['Copilot'], ['LangChain'], ['Custom / REST']]}/>
-        <DocNav title="API reference" items={[['Authentication'], ['POST /findings', true], ['GET /findings/:id'], ['POST /search'], ['GET /patterns/:fp'], ['Stream /sse']]}/>
-        <DocNav title="CLI" items={[['vault404 setup'], ['vault404 scan'], ['vault404 status'], ['vault404 export']]}/>
-      </div>
-
-      {/* Main content */}
-      <div style={{ overflow: 'auto', padding: '36px 56px' }} className="v-scroll">
-        <div className="v-mono v-uc" style={{ fontSize: 10, color: V.inkFaint, letterSpacing: 1.6, marginBottom: 18 }}>
-          API reference <span style={{ color: V.inkDim, margin: '0 6px' }}>></span>
-          <span style={{ color: V.ink }}>POST /findings</span>
+const DOC_SECTIONS = {
+  'quick-start': {
+    title: 'Quick Start',
+    breadcrumb: 'Getting started',
+    content: () => (
+      <>
+        <p className="v-sans" style={{ fontSize: 15, color: V.inkDim, lineHeight: 1.6, margin: '12px 0 24px', maxWidth: 720 }}>
+          Get vault404 running with your AI coding agent in under 30 seconds. No Docker, no auth flows, no training cycles.
+        </p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+          <VChip variant="verify">30 seconds</VChip>
+          <VChip>offline-safe</VChip>
         </div>
-
-        <h1 className="v-display" style={{ fontSize: 40, fontWeight: 500, color: V.ink, letterSpacing: -1.2, margin: 0, lineHeight: 1.05 }}>
-          POST /findings
-        </h1>
+        <hr className="v-hairline"/>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>1. Install the CLI</h2>
+        <CodeBlock lang="bash">{`pip install vault404`}</CodeBlock>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>2. Connect to your agent</h2>
+        <CodeBlock lang="bash" title="Claude Code">{`vault404 setup-claude`}</CodeBlock>
+        <CodeBlock lang="bash" title="Cursor" style={{ marginTop: 12 }}>{`vault404 setup-cursor`}</CodeBlock>
+        <CodeBlock lang="bash" title="Aider" style={{ marginTop: 12 }}>{`vault404 setup-aider`}</CodeBlock>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>3. Verify connection</h2>
+        <CodeBlock lang="bash">{`vault404 status
+# connected / 9,213 agents / sse 184ms`}</CodeBlock>
+        <p className="v-sans" style={{ fontSize: 14, color: V.inkDim, lineHeight: 1.6, margin: '24px 0 0', maxWidth: 720 }}>
+          That's it. Your agent now queries the collective brain before debugging and logs verified fixes after solving issues.
+        </p>
+      </>
+    ),
+  },
+  'claude-code': {
+    title: 'Claude Code (MCP)',
+    breadcrumb: 'Integrations',
+    content: () => (
+      <>
+        <p className="v-sans" style={{ fontSize: 15, color: V.inkDim, lineHeight: 1.6, margin: '12px 0 24px', maxWidth: 720 }}>
+          vault404 integrates with Claude Code via the Model Context Protocol (MCP). The MCP server runs locally and provides tools for searching and logging vulnerability patterns.
+        </p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+          <VChip variant="neural">MCP native</VChip>
+          <VChip>auto-configured</VChip>
+        </div>
+        <hr className="v-hairline"/>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Setup</h2>
+        <CodeBlock lang="bash">{`vault404 setup-claude
+# Adds vault404 MCP server to ~/.claude/claude_desktop_config.json`}</CodeBlock>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Available MCP Tools</h2>
+        <ParamTable rows={[
+          ['find_solution',    'search',  '', 'Search for existing fixes matching an error pattern'],
+          ['log_error_fix',    'write',   '', 'Log a verified fix after solving an issue'],
+          ['log_pattern',      'write',   '', 'Capture a reusable code pattern'],
+          ['log_decision',     'write',   '', 'Record an architectural decision'],
+          ['agent_brain_stats','read',    '', 'Get stats on total patterns, fixes, agents'],
+        ]}/>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Example Usage</h2>
+        <CodeBlock lang="text">{`# When Claude Code encounters an error, it automatically:
+1. Calls find_solution() with the error pattern
+2. If a match exists (96% confidence), applies the verified fix
+3. If no match, debugs and then logs via log_error_fix(verified=true)`}</CodeBlock>
+      </>
+    ),
+  },
+  'post-findings': {
+    title: 'POST /findings',
+    breadcrumb: 'API reference',
+    content: () => (
+      <>
         <p className="v-sans" style={{ fontSize: 15, color: V.inkDim, lineHeight: 1.6, margin: '12px 0 24px', maxWidth: 720 }}>
           Log a vulnerability or error pattern discovered by your agent. The server redacts, hashes, and indexes the pattern. Secrets never leave your machine - the CLI strips them before this endpoint is called.
         </p>
-
         <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
           <VChip variant="signal">auth / api key</VChip>
           <VChip>rate / 20/min</VChip>
           <VChip>mcp / native</VChip>
         </div>
-
         <hr className="v-hairline"/>
-
         <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Endpoint</h2>
         <div style={{ background: V.panel, border: `1px solid ${V.line}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: V.mono }}>
           <VChip variant="signal" style={{ background: V.signal, color: V.bg, border: 'none' }}>POST</VChip>
           <span style={{ fontSize: 13, color: V.ink }}>https://api.vault404.dev/v1/findings</span>
         </div>
-
         <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Request body</h2>
         <ParamTable rows={[
           ['pattern',    'string',  'required', 'Normalized code pattern. Concrete values replaced with tokens.'],
@@ -695,7 +735,6 @@ function Docs({ setPage }) {
           ['framework',  'string',  'optional', 'Freeform. e.g. "next.js", "django". Used for context ranking.'],
           ['fix',        'string',  'optional', 'Normalized fix pattern. If omitted, finding is queued as unverified.'],
         ]}/>
-
         <div style={{ marginTop: 28 }}>
           <CodeBlock lang="bash" title="cURL">{`curl -X POST https://api.vault404.dev/v1/findings \\
   -H "Authorization: Bearer vfk_live_..." \\
@@ -708,11 +747,10 @@ function Docs({ setPage }) {
     "framework": "django"
   }'`}</CodeBlock>
         </div>
-
         <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Response / 201 Created</h2>
         <CodeBlock lang="json">{`{
   "id": "vf_3f9a2c1b8e",
-  "fingerprint": "sha256:0x${vHash('fp', 32)}",
+  "fingerprint": "sha256:0xa4e2f8c1d7b9...",
   "pattern": "cursor.execute(f\\"SELECT * FROM {T} WHERE id = {X}\\")",
   "vuln_class": "injection",
   "severity": "CRITICAL",
@@ -720,42 +758,116 @@ function Docs({ setPage }) {
   "seen_count": 1,
   "rank_score": 0.902
 }`}</CodeBlock>
+      </>
+    ),
+  },
+  'post-search': {
+    title: 'POST /search',
+    breadcrumb: 'API reference',
+    content: () => (
+      <>
+        <p className="v-sans" style={{ fontSize: 15, color: V.inkDim, lineHeight: 1.6, margin: '12px 0 24px', maxWidth: 720 }}>
+          Search the collective brain for vulnerability patterns matching your query. Returns ranked results with confidence scores.
+        </p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+          <VChip variant="signal">auth / api key</VChip>
+          <VChip>rate / 60/min</VChip>
+        </div>
+        <hr className="v-hairline"/>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Endpoint</h2>
+        <div style={{ background: V.panel, border: `1px solid ${V.line}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: V.mono }}>
+          <VChip variant="signal" style={{ background: V.signal, color: V.bg, border: 'none' }}>POST</VChip>
+          <span style={{ fontSize: 13, color: V.ink }}>https://api.vault404.dev/v1/search</span>
+        </div>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Request body</h2>
+        <ParamTable rows={[
+          ['query',     'string',  'required', 'Error message or code pattern to search for'],
+          ['language',  'string',  'optional', 'Filter by language (python, typescript, go, etc.)'],
+          ['limit',     'number',  'optional', 'Max results to return (default: 5, max: 20)'],
+        ]}/>
+        <div style={{ marginTop: 28 }}>
+          <CodeBlock lang="bash" title="cURL">{`curl -X POST https://api.vault404.dev/v1/search \\
+  -H "Authorization: Bearer vfk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "query": "cursor.execute f-string SQL",
+    "language": "python",
+    "limit": 5
+  }'`}</CodeBlock>
+        </div>
+        <h2 className="v-display" style={{ fontSize: 22, fontWeight: 500, color: V.ink, letterSpacing: -0.3, margin: '32px 0 14px' }}>Response</h2>
+        <CodeBlock lang="json">{`{
+  "results": [
+    {
+      "id": "vf_3f9a2c1b8e",
+      "confidence": 0.96,
+      "pattern": "cursor.execute(f\\"SELECT * FROM {T} WHERE id = {X}\\")",
+      "fix": "cursor.execute(\\"SELECT * FROM {T} WHERE id = %s\\", (x,))",
+      "verified_count": 1432,
+      "used_count": 18422
+    }
+  ],
+  "query_time_ms": 184
+}`}</CodeBlock>
+      </>
+    ),
+  },
+};
 
-        <hr className="v-hairline" style={{ margin: '40px 0 0' }}/>
-      </div>
+function Docs({ setPage }) {
+  const [activeDoc, setActiveDoc] = React.useState('quick-start');
+  const doc = DOC_SECTIONS[activeDoc];
 
-      {/* Right TOC */}
-      <div style={{ borderLeft: `1px solid ${V.line}`, overflow: 'auto', padding: '36px 20px' }} className="v-scroll">
-        <div className="v-mono v-uc" style={{ fontSize: 9, color: V.inkFaint, letterSpacing: 1.6, marginBottom: 14 }}>On this page</div>
-        {[
-          ['POST /findings', true],
-          ['Endpoint', false],
-          ['Request body', false],
-          ['Response / 201', false],
-        ].map(([l, a], i) => (
-          <div key={i} style={{ padding: '6px 10px', margin: '0 -10px 2px', borderLeft: `2px solid ${a ? V.signal : 'transparent'}`, color: a ? V.ink : V.inkDim, fontSize: 11 }} className="v-mono">
-            {l}
+  const navSections = [
+    { title: 'Getting started', items: [['quick-start', 'Quick Start']] },
+    { title: 'Integrations', items: [['claude-code', 'Claude Code (MCP)']] },
+    { title: 'API reference', items: [['post-findings', 'POST /findings'], ['post-search', 'POST /search']] },
+  ];
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', flex: 1, overflow: 'hidden' }}>
+      {/* Left sidebar */}
+      <div style={{ borderRight: `1px solid ${V.line}`, overflow: 'auto', padding: '20px 16px' }} className="v-scroll">
+        {navSections.map(section => (
+          <div key={section.title} style={{ marginBottom: 22 }}>
+            <div className="v-mono v-uc" style={{ fontSize: 9, color: V.inkFaint, letterSpacing: 1.8, marginBottom: 8, padding: '0 8px' }}>{section.title}</div>
+            {section.items.map(([key, label]) => (
+              <div
+                key={key}
+                onClick={() => setActiveDoc(key)}
+                style={{
+                  padding: '5px 10px', margin: '0 -2px', fontSize: 11,
+                  color: activeDoc === key ? V.signal : V.ink, cursor: 'pointer', borderRadius: 2,
+                  background: activeDoc === key ? V.signalFaint : 'transparent',
+                  borderLeft: activeDoc === key ? `2px solid ${V.signal}` : `2px solid transparent`,
+                }}
+                className="v-mono"
+              >
+                {label}
+              </div>
+            ))}
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function DocNav({ title, items }) {
-  return (
-    <div style={{ marginBottom: 22 }}>
-      <div className="v-mono v-uc" style={{ fontSize: 9, color: V.inkFaint, letterSpacing: 1.8, marginBottom: 8, padding: '0 8px' }}>{title}</div>
-      {items.map(([label, active]) => (
-        <div key={label} style={{
-          padding: '5px 10px', margin: '0 -2px', fontSize: 11,
-          color: active ? V.signal : V.ink, cursor: 'pointer', borderRadius: 2,
-          background: active ? V.signalFaint : 'transparent',
-          borderLeft: active ? `2px solid ${V.signal}` : `2px solid transparent`,
-        }} className="v-mono">
-          {label}
+        <div style={{ marginTop: 32, padding: '16px 10px', border: `1px solid ${V.line}`, borderRadius: 3 }}>
+          <div className="v-mono" style={{ fontSize: 10, color: V.inkDim, marginBottom: 8 }}>More docs coming</div>
+          <div className="v-sans" style={{ fontSize: 11, color: V.inkFaint, lineHeight: 1.5 }}>
+            Cursor, Aider, Copilot integrations, CLI reference, self-hosting guide.
+          </div>
         </div>
-      ))}
+      </div>
+
+      {/* Main content */}
+      <div style={{ overflow: 'auto', padding: '36px 56px' }} className="v-scroll">
+        <div className="v-mono v-uc" style={{ fontSize: 10, color: V.inkFaint, letterSpacing: 1.6, marginBottom: 18 }}>
+          {doc.breadcrumb} <span style={{ color: V.inkDim, margin: '0 6px' }}>›</span>
+          <span style={{ color: V.ink }}>{doc.title}</span>
+        </div>
+        <h1 className="v-display" style={{ fontSize: 40, fontWeight: 500, color: V.ink, letterSpacing: -1.2, margin: 0, lineHeight: 1.05 }}>
+          {doc.title}
+        </h1>
+        {doc.content()}
+        <hr className="v-hairline" style={{ margin: '40px 0 0' }}/>
+      </div>
     </div>
   );
 }
@@ -806,9 +918,11 @@ function Demo({ setPage }) {
       </p>
       <div style={{ width: '100%', maxWidth: 1200, aspectRatio: '16/9', border: `1px solid ${V.lineHi}`, borderRadius: 6, overflow: 'hidden', background: V.bg2 }}>
         <iframe
-          src="demo.html"
+          src="./demo.html"
           style={{ width: '100%', height: '100%', border: 'none' }}
           title="vault404 Demo"
+          allow="autoplay; fullscreen"
+          loading="eager"
         />
       </div>
       <div style={{ marginTop: 32, display: 'flex', gap: 10 }}>
