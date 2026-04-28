@@ -1,5 +1,5 @@
 # Build system
-hatchling>=1.18.0
+hatchling>=1.29.0
 
 # vault404 API dependencies
 fastapi>=0.109.0
